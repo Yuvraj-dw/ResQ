@@ -1,0 +1,22 @@
+node_modules/
+.expo/
+dist/
+web-build/
+*.tsbuildinfo
+*.js.map
+*.d.ts.map
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

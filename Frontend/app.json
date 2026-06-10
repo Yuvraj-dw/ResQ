@@ -1,0 +1,72 @@
+{
+  "expo": {
+    "name": "Emergency Connect",
+    "slug": "emergency-connect",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#DC143C"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.emergencyconnect.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Emergency Connect needs your location to show nearby emergencies and share your location with responders.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Emergency Connect needs your location in the background to notify you of nearby emergencies.",
+        "NSPhotoLibraryUsageDescription": "Emergency Connect needs photo library access for profile pictures."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#DC143C"
+      },
+      "package": "com.emergencyconnect.app",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "RECEIVE_SMS",
+        "SEND_SMS",
+        "VIBRATE",
+        "POST_NOTIFICATIONS"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "${GOOGLE_MAPS_API_KEY}"
+        }
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Emergency Connect needs your location to show nearby emergencies and share your location with responders.",
+          "locationWhenInUsePermission": "Emergency Connect needs your location to show nearby emergencies."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#DC143C"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "your-eas-project-id"
+      }
+    }
+  }
+}
