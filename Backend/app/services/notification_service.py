@@ -1,7 +1,7 @@
 import logging
-from app.repositories.repositories import NotificationRepo
+from app.repositories.repositories import NotificationRepo, AppNotificationRepo
 from app.services.sms_service import sms_service
-from app.models.models import NotificationStatus
+from app.models.models import NotificationStatus, AppNotificationType
 from app.services.matching import haversine_km
 
 
@@ -11,6 +11,26 @@ logger = logging.getLogger(__name__)
 class NotificationService:
     def __init__(self):
         self.notification_repo = NotificationRepo()
+        self.app_notification_repo = AppNotificationRepo()
+
+    async def create_app_notification(
+        self,
+        user_phone: str,
+        notification_type: AppNotificationType,
+        title: str,
+        message: str,
+        request_id: str = None,
+        data: dict = None,
+    ):
+        await self.app_notification_repo.create({
+            "user_phone": user_phone,
+            "notification_type": notification_type.value,
+            "title": title,
+            "message": message,
+            "request_id": request_id,
+            "data": data,
+            "read": False,
+        })
 
     async def notify_volunteers(
         self,
@@ -42,6 +62,20 @@ class NotificationService:
             }
 
             notification_id = await self.notification_repo.create(notification_data)
+
+            await self.create_app_notification(
+                user_phone=volunteer_phone,
+                notification_type=AppNotificationType.NEW_REQUEST,
+                title=f"New {resource} request nearby",
+                message=f"{urgency.title()} need for {resource} near {location_name or 'your area'}. You are {distance_km:.1f} km away.",
+                request_id=request_id,
+                data={
+                    "resource": resource,
+                    "urgency": urgency,
+                    "location_name": location_name,
+                    "distance_km": round(distance_km, 1),
+                },
+            )
 
             try:
                 await sms_service.send_volunteer_notification(

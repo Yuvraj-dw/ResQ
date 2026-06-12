@@ -1,0 +1,44 @@
+INFO:     Started server process [28196]
+INFO:     Waiting for application startup.
+
+[1;36m=======================================================[0m
+[1;36m██████╗ ███████╗███████╗ ██████╗[0m
+[1;36m██╔══██╗██╔════╝██╔════╝██╔═══██╗[0m
+[1;36m██████╔╝█████╗  ███████╗██║   ██║[0m
+[1;36m██╔══██╗██╔══╝  ╚════██║██║▄▄ ██║[0m
+[1;36m██║  ██║███████╗███████║╚██████╔╝[0m
+[1;36m╚═╝  ╚═╝╚══════╝╚══════╝ ╚══▀▀═╝ [0m
+[1;36m=======================================================[0m
+[1;37m  AI-Powered Emergency Response Platform[0m
+[90m  v1.0.0 | MongoDB | DeepInfra | SMS Gate[0m
+
+[32m[START] [0m [32mINFO   [0m Starting ResQ server...[0m
+[32m[START] [0m [32mINFO   [0m Connected to MongoDB[0m
+[32m[SCHED] [0m [32mINFO   [0m Radius expansion scheduler started (5min intervals)[0m
+[32m[START] [0m [32mINFO   [0m Radius expansion scheduler started (5min intervals)[0m
+[32m[START] [0m [32mINFO   [0m Server ready - listening for requests[0m
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+[32m[AUTH]  [0m [32mINFO   [0m OTP for +919999000101: 393311[0m
+[32m[HTTP]  [0m [32mINFO   [0m POST    200 /api/v1/auth/register/app (1.07s)[0m
+[32m[AUTH]  [0m [32mINFO   [0m OTP for +919999000102: 666866[0m
+[32m[HTTP]  [0m [32mINFO   [0m POST    200 /api/v1/auth/register/app (972ms)[0m
+[32m[HTTP]  [0m [32mINFO   [0m POST    200 /api/v1/auth/register/app/verify (408ms)[0m
+[32m[HTTP]  [0m [32mINFO   [0m POST    200 /api/v1/auth/register/app/verify (429ms)[0m
+[32m[HTTP]  [0m [32mINFO   [0m GET     200 /api/v1/auth/me (44ms)[0m
+[32m[HTTP]  [0m [32mINFO   [0m POST    200 /api/v1/requests/ (271ms)[0m
+[32m[HTTP]  [0m [32mINFO   [0m GET     200 /api/v1/notifications/ (88ms)[0m
+[32m[HTTP]  [0m [32mINFO   [0m GET     200 /api/v1/notifications/unread-count (85ms)[0m
+[32m[HTTP]  [0m [32mINFO   [0m POST    200 /api/v1/requests/6a2c004c13631e66aac83398/accept (1.01s)[0m
+[32m[HTTP]  [0m [32mINFO   [0m GET     200 /api/v1/requests/6a2c004c13631e66aac83398 (85ms)[0m
+[32m[HTTP]  [0m [32mINFO   [0m GET     200 /api/v1/notifications/ (95ms)[0m
+[32m[HTTP]  [0m [32mINFO   [0m GET     200 /api/v1/notifications/ (90ms)[0m
+[32m[HTTP]  [0m [32mINFO   [0m GET     200 /api/v1/notifications/ (87ms)[0m
+[32m[HTTP]  [0m [32mINFO   [0m PATCH   200 /api/v1/notifications/6a2c005313631e66aac833a8/read (185ms)[0m
+[32m[HTTP]  [0m [32mINFO   [0m GET     200 /api/v1/notifications/unread-count (82ms)[0m
+[32m[HTTP]  [0m [32mINFO   [0m POST    200 /api/v1/notifications/mark-all-read (100ms)[0m
+[32m[HTTP]  [0m [32mINFO   [0m GET     200 /api/v1/notifications/unread-count (87ms)[0m
+[32m[SCHED] [0m [32mINFO   [0m Checking 2 request(s) for radius expansion[0m
+[32m[SCHED] [0m [32mINFO   [0m Request 6a2bffd52ffa612bf713c448: no new volunteers, notifying requester of expansion to 20.0km[0m
+[32m[SCHED] [0m [32mINFO   [0m Request 6a2c002d5a6fb653aa415557: no new volunteers, notifying requester of expansion to 15.0km[0m
+^C

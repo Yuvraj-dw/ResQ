@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.database import connect_to_database, disconnect_from_database
 from app.core.logging_config import setup_logging, RequestLoggingMiddleware, print_banner
 from app.core.middleware import RateLimitMiddleware
-from app.api.v1.router import router as v1_router, ws_router
+from app.api.v1.router import router as v1_router
 from app.services.scheduler import scheduler
 
 
@@ -48,7 +48,6 @@ app.add_middleware(
 )
 
 app.include_router(v1_router)
-app.include_router(ws_router)
 
 
 @app.get("/")

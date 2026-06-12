@@ -6,7 +6,6 @@ from app.services.sms_service import sms_service, SMSService
 from app.services.notification_service import notification_service, NotificationService
 from app.services.distance import distance_service, DistanceService
 from app.services.scheduler import scheduler, RadiusExpansionScheduler
-from app.services.ws_manager import ws_manager, ConnectionManager
 
 __all__ = [
     "AuthService",
@@ -21,6 +20,4 @@ __all__ = [
     "DistanceService",
     "scheduler",
     "RadiusExpansionScheduler",
-    "ws_manager",
-    "ConnectionManager",
 ]

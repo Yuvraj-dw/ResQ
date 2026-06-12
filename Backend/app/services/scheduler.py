@@ -111,16 +111,6 @@ class RadiusExpansionScheduler:
         request_repo = RequestRepo()
         await request_repo.update_status(request_id, RequestStatus.MATCHED)
 
-        from app.services.ws_manager import ws_manager
-        volunteer_phones = [v["phone"] for v in truly_new]
-        updated_req = await request_repo.get_by_id(request_id)
-        if updated_req:
-            from app.api.v1.requests import request_to_response
-            await ws_manager.broadcast_new_request(
-                request_data=request_to_response(updated_req).model_dump(mode="json"),
-                volunteer_phones=volunteer_phones,
-            )
-
         logger.info(
             f"Request {request_id}: expanded to {new_radius}km, "
             f"notified {len(truly_new)} new volunteers"

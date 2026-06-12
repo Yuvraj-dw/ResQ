@@ -13,6 +13,7 @@ from app.models.models import (
     RequestStatus,
     NotificationStatus,
     SMSSessionStep,
+    AppNotificationType,
 )
 
 
@@ -55,6 +56,7 @@ class UserRepo:
         resource: ResourceType,
         radius_meters: float,
         blood_group: Optional[BloodGroup] = None,
+        exclude_phone: Optional[str] = None,
     ) -> List[dict]:
         query = {
             "location": {
@@ -69,6 +71,8 @@ class UserRepo:
             "resources": {"$in": [resource.value]},
             "is_volunteer": True,
         }
+        if exclude_phone:
+            query["phone"] = {"$ne": exclude_phone}
         if blood_group and resource == ResourceType.BLOOD:
             query["blood_group"] = blood_group.value
 
@@ -203,3 +207,45 @@ class SMSSessionRepo:
 
     async def delete(self, phone: str):
         await self.collection.delete_many({"phone": phone})
+
+
+class AppNotificationRepo:
+    def __init__(self):
+        self.collection_name = "app_notifications"
+
+    @property
+    def collection(self):
+        return get_database()[self.collection_name]
+
+    async def create(self, notification_data: dict) -> str:
+        notification_data["created_at"] = datetime.now(timezone.utc)
+        result = await self.collection.insert_one(notification_data)
+        return str(result.inserted_id)
+
+    async def get_by_id(self, notification_id: str) -> Optional[dict]:
+        return await self.collection.find_one({"_id": ObjectId(notification_id)})
+
+    async def list_by_phone(self, phone: str, limit: int = 50, skip: int = 0) -> List[dict]:
+        cursor = self.collection.find({"user_phone": phone}).sort("created_at", -1).skip(skip).limit(limit)
+        return await cursor.to_list(length=limit)
+
+    async def count_unread(self, phone: str) -> int:
+        return await self.collection.count_documents({"user_phone": phone, "read": False})
+
+    async def mark_read(self, notification_id: str, phone: str) -> bool:
+        result = await self.collection.update_one(
+            {"_id": ObjectId(notification_id), "user_phone": phone},
+            {"$set": {"read": True}},
+        )
+        return result.modified_count > 0
+
+    async def mark_all_read(self, phone: str) -> int:
+        result = await self.collection.update_many(
+            {"user_phone": phone, "read": False},
+            {"$set": {"read": True}},
+        )
+        return result.modified_count
+
+    async def create_index(self):
+        await self.collection.create_index([("user_phone", 1), ("created_at", -1)])
+        await self.collection.create_index([("user_phone", 1), ("read", 1)])

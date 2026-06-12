@@ -21,15 +21,22 @@ class MatchingService:
         resource: ResourceType,
         blood_group: Optional[BloodGroup] = None,
         radius_km: float = None,
+        exclude_phone: Optional[str] = None,
     ) -> List[dict]:
         radius_km = radius_km or self.initial_radius
         radius_meters = radius_km * 1000
+
+        if not exclude_phone:
+            request = await self.request_repo.get_by_id(request_id)
+            if request:
+                exclude_phone = request.get("requester_phone")
 
         volunteers = await self.user_repo.find_nearby_volunteers(
             coordinates=coordinates,
             resource=resource,
             radius_meters=radius_meters,
             blood_group=blood_group if resource == ResourceType.BLOOD else None,
+            exclude_phone=exclude_phone,
         )
         return volunteers
 

@@ -24,13 +24,11 @@ MODULE_ICONS = {
     "app.services.distance": "[DIST]",
     "app.services.scheduler": "[SCHED]",
     "app.services.auth_service": "[AUTH]",
-    "app.services.ws_manager": "[WS]",
     "app.api.v1.auth": "[AUTH]",
     "app.api.v1.requests": "[REQ]",
     "app.api.v1.volunteers": "[VOL]",
     "app.api.v1.sms": "[SMS]",
     "app.api.v1.tracking": "[TRACK]",
-    "app.api.v1.websocket": "[WS]",
     "app.api.v1.notifications": "[NOTIF]",
     "resq.request": "[HTTP]",
 }
@@ -98,16 +96,8 @@ class RequestLoggingMiddleware:
         self.app = app
 
     async def __call__(self, scope, receive, send):
-        if scope["type"] not in ("http", "websocket"):
+        if scope["type"] != "http":
             await self.app(scope, receive, send)
-            return
-
-        if scope["type"] == "websocket":
-            path = scope.get("path", "")
-            logger = logging.getLogger("resq.request")
-            logger.info(f"WS CONNECT {path}")
-            await self.app(scope, receive, send)
-            logger.info(f"WS DISCONNECT {path}")
             return
 
         start_time = time.time()

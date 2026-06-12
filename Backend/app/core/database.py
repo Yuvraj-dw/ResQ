@@ -34,6 +34,9 @@ async def connect_to_database():
     await db.database.sms_sessions.create_index("phone")
     await db.database.sms_sessions.create_index("updated_at")
 
+    await db.database.app_notifications.create_index([("user_phone", 1), ("created_at", -1)])
+    await db.database.app_notifications.create_index([("user_phone", 1), ("read", 1)])
+
 
 async def disconnect_from_database():
     if db.client:

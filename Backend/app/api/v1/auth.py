@@ -266,3 +266,21 @@ async def register_sms(data: SMSRegisterRequest):
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: dict = Depends(get_current_user)):
     return user_to_response(current_user)
+
+
+@router.post("/login", response_model=dict)
+async def login(request: OTPSendRequest):
+    user_repo = UserRepo()
+    user = await user_repo.get_by_phone(request.phone)
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Phone number not registered. Please register first.",
+        )
+
+    auth_service = AuthService()
+    result = await auth_service.send_otp(request.phone)
+    await sms_service.send_otp(request.phone, result["otp"])
+
+    return {"message": "OTP sent successfully", "phone": request.phone}

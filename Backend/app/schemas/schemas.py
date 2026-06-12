@@ -247,4 +247,23 @@ class NotificationResponse(BaseModel):
         populate_by_name = True
 
 
+class AppNotificationResponse(BaseModel):
+    id: str = Field(..., alias="_id")
+    user_phone: str
+    notification_type: str
+    title: str
+    message: str
+    request_id: Optional[str] = None
+    data: Optional[dict] = None
+    read: bool = False
+    created_at: datetime
+
+    class Config:
+        populate_by_name = True
+
+
+class UnreadCountResponse(BaseModel):
+    unread_count: int
+
+
 TokenResponse.model_rebuild()
