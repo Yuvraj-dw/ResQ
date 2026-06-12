@@ -392,6 +392,10 @@ async def sms_webhook(
     phone = sms_data.sender
     message = sms_data.message.strip()
 
+    if phone in settings.blocked_numbers_list:
+        logger.info(f"Blocked SMS from {phone}")
+        return {"status": "blocked", "reason": "Phone number is blocked"}
+
     logger.info(f"Incoming SMS from {phone}: {message[:50]}...")
 
     msg_lower = message.lower().strip()

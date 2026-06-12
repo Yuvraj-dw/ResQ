@@ -42,6 +42,8 @@ class AuthService:
             "expires_at": expires_at,
         })
 
+        logger.info(f"OTP for {phone}: {otp}")
+
         return {"otp": otp, "phone": phone, "expires_at": expires_at}
 
     async def verify_otp(self, phone: str, otp: str) -> Optional[Tuple[str, dict]]:
@@ -52,6 +54,9 @@ class AuthService:
         otp_hash = hashlib.sha256(otp.encode()).hexdigest()
         if otp_record["otp_hash"] != otp_hash:
             return None
+
+        if otp_record["expires_at"].tzinfo is None:
+            otp_record["expires_at"] = otp_record["expires_at"].replace(tzinfo=timezone.utc)
 
         if datetime.now(timezone.utc) > otp_record["expires_at"]:
             return None

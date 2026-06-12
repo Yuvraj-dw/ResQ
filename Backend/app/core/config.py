@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     SMS_GATE_PASSWORD: str = ""
     SMS_GATE_SIGNING_KEY: str = ""
     SMS_GATE_DEVICE_ID: Optional[str] = None
+    BLOCKED_PHONE_NUMBERS: str = "+917725827021"
 
     NOMINATIM_BASE_URL: str = "https://nominatim.openstreetmap.org"
 
@@ -37,6 +38,10 @@ class Settings(BaseSettings):
     MATCHING_MAX_RADIUS_KM: float = 20.0
     MATCHING_RADIUS_STEP_KM: float = 5.0
     MATCHING_EXPANSION_INTERVAL_SECONDS: int = 300
+
+    @property
+    def blocked_numbers_list(self) -> list:
+        return [n.strip() for n in self.BLOCKED_PHONE_NUMBERS.split(",") if n.strip()]
 
     class Config:
         env_file = ".env"
