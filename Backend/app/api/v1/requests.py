@@ -18,6 +18,7 @@ from app.repositories.repositories import RequestRepo, UserRepo, NotificationRep
 from app.services.sms_service import sms_service
 from app.services.notification_service import notification_service
 from app.services.matching import MatchingService
+from app.models.models import AppNotificationType
 
 
 router = APIRouter(prefix="/requests", tags=["Emergency Requests"])
@@ -72,15 +73,6 @@ async def process_matching(request_id: str, coordinates: list, resource: str, bl
         )
         req_repo = RequestRepo()
         await req_repo.update_status(request_id, RequestStatus.MATCHED)
-
-        from app.services.ws_manager import ws_manager
-        volunteer_phones = [v["phone"] for v in volunteers]
-        req = await req_repo.get_by_id(request_id)
-        if req:
-            await ws_manager.broadcast_new_request(
-                request_data=request_to_response(req).model_dump(mode="json"),
-                volunteer_phones=volunteer_phones,
-            )
 
 
 @router.post("/", response_model=RequestResponse)
@@ -212,6 +204,23 @@ async def accept_request(
         distance_km=distance_km or 0,
     )
 
+    await notification_service.create_app_notification(
+        user_phone=req["requester_phone"],
+        notification_type=AppNotificationType.VOLUNTEER_FOUND,
+        title="Volunteer found!",
+        message=f"{volunteer.get('name', 'Volunteer')} is {distance_km:.1f} km away and has been assigned to your request.",
+        request_id=request_id,
+        data={"volunteer_phone": volunteer["phone"], "distance_km": round(distance_km, 1) if distance_km else None},
+    )
+
+    await notification_service.create_app_notification(
+        user_phone=volunteer["phone"],
+        notification_type=AppNotificationType.REQUEST_ASSIGNED,
+        title="Request assigned to you",
+        message=f"You have accepted the request for {req['resource']} near {req.get('location_name', 'unknown')}.",
+        request_id=request_id,
+    )
+
     return AcceptRequestResponse(
         request_id=request_id,
         status=RequestStatus.ASSIGNED.value,
@@ -262,6 +271,13 @@ async def update_request_status(
         await sms_service.send_sms(
             req["requester_phone"],
             f"Your emergency request has been cancelled.",
+        )
+        await notification_service.create_app_notification(
+            user_phone=req["requester_phone"],
+            notification_type=AppNotificationType.REQUEST_CANCELLED,
+            title="Request cancelled",
+            message=f"Your request for {req['resource']} has been cancelled.",
+            request_id=request_id,
         )
 
     return request_to_response(updated)

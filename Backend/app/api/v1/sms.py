@@ -10,6 +10,7 @@ from app.models.models import (
     UrgencyLevel,
     RequestStatus,
     SMSSessionStep,
+    AppNotificationType,
 )
 from app.repositories.repositories import SMSSessionRepo, UserRepo, RequestRepo, NotificationRepo
 from app.services.ai_parser import AIParserService
@@ -128,6 +129,15 @@ async def handle_sms_accept(phone: str, request_id: str):
         f"Distance: {distance_km:.1f} km" if distance_km else "The requester has been notified.",
     )
 
+    await notification_service.create_app_notification(
+        user_phone=request["requester_phone"],
+        notification_type=AppNotificationType.VOLUNTEER_FOUND,
+        title="Volunteer found!",
+        message=f"{volunteer.get('name', 'Volunteer')} ({phone}) is {distance_km:.1f} km away and has been assigned to your request.",
+        request_id=request_id,
+        data={"volunteer_phone": phone, "distance_km": round(distance_km, 1) if distance_km else None},
+    )
+
     logger.info(f"Volunteer {phone} accepted request {request_id}")
 
 
@@ -198,7 +208,8 @@ async def process_sms_request(phone: str, message: str, location_name: Optional[
             coordinates = list(coords)
 
     if not coordinates:
-        await sms_service.send_sms(phone, f"Could not determine location for '{location_name}'. Please provide a more specific location.")
+        loc_display = location_name or "your message"
+        await sms_service.send_sms(phone, f"Could not determine location from '{loc_display}'. Please include your location, e.g., 'Need blood urgently near AIIMS Delhi'")
         return None
 
     req_repo = RequestRepo()

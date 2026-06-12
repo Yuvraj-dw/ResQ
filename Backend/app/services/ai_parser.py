@@ -1,6 +1,7 @@
 import httpx
 import json
 import logging
+import re
 from typing import Optional
 from app.core.config import settings
 from app.schemas.schemas import AIParsedRequest
@@ -15,6 +16,14 @@ class AIParserService:
         self.model = settings.DEEPINFRA_MODEL
         self.base_url = settings.DEEPINFRA_BASE_URL
         self.system_prompt = settings.AI_SYSTEM_PROMPT
+
+    @staticmethod
+    def _strip_json(content: str) -> str:
+        content = content.strip()
+        if content.startswith("```"):
+            content = re.sub(r"^```(?:json)?\s*\n?", "", content)
+            content = re.sub(r"\n?```\s*$", "", content)
+        return content.strip()
 
     async def parse_emergency_message(self, message: str) -> Optional[AIParsedRequest]:
         try:
@@ -43,6 +52,7 @@ class AIParserService:
             data = response.json()
             content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
 
+            content = self._strip_json(content)
             parsed = json.loads(content)
             return AIParsedRequest(
                 resource=parsed.get("resource"),

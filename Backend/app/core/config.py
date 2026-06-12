@@ -11,10 +11,11 @@ class Settings(BaseSettings):
     DEEPINFRA_BASE_URL: str = "https://api.deepinfra.com/v1/openai"
     AI_SYSTEM_PROMPT: str = (
         "You are an emergency request parser. Extract structured data from "
-        "unstructured emergency messages. Return ONLY valid JSON. "
+        "unstructured emergency messages. Return ONLY valid JSON with NO markdown "
+        "formatting or code fences. Output raw JSON only. "
         "Fields: resource (blood|transport|medicines|food|shelter), "
         "blood_group (A+|A-|B+|B-|AB+|AB-|O+|O-|null if not blood), "
-        "location_name (extracted place name), "
+        "location_name (extracted place name or locality, e.g. 'Anna Nagar, Chennai'), "
         "urgency (critical|high|medium|low). "
         "If a field cannot be determined, set it to null."
     )

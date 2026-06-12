@@ -46,6 +46,15 @@ class NotificationStatus(str, Enum):
     EXPIRED = "expired"
 
 
+class AppNotificationType(str, Enum):
+    NEW_REQUEST = "new_request"
+    REQUEST_MATCHED = "request_matched"
+    REQUEST_ASSIGNED = "request_assigned"
+    REQUEST_CANCELLED = "request_cancelled"
+    VOLUNTEER_FOUND = "volunteer_found"
+    SEARCH_EXPANDED = "search_expanded"
+
+
 class SMSSessionStep(str, Enum):
     NAME = "name"
     RESOURCES = "resources"
@@ -155,6 +164,22 @@ class SMSSessionDB(BaseModel):
     data: dict = {}
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    class Config:
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
+
+
+class AppNotificationDB(BaseModel):
+    id: Optional[str] = Field(None, alias="_id")
+    user_phone: str
+    notification_type: AppNotificationType
+    title: str
+    message: str
+    request_id: Optional[str] = None
+    data: Optional[dict] = None
+    read: bool = False
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:
         arbitrary_types_allowed = True
