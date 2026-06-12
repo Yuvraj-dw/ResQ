@@ -1,20 +1,19 @@
-import type { BloodGroup } from './auth';
+import type { BloodGroup, UserResponse } from './auth';
 
-export interface UserProfile {
-  id: string;
-  fullName: string;
-  mobileNumber: string;
-  bloodGroup: BloodGroup | string;
-  address: string;
-  pincode: string;
-  isRegistered: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface UpdateProfileRequest {
+export type UserProfile = UserResponse & {
   fullName?: string;
-  bloodGroup?: string;
+  mobileNumber?: string;
+  bloodGroup?: BloodGroup | string;
   address?: string;
   pincode?: string;
+  isRegistered?: boolean;
+};
+
+export interface UpdateProfileRequest {
+  name?: string;
+  resources?: string[];
+  blood_group?: string;
+  location_name?: string;
+  latitude?: number;
+  longitude?: number;
 }

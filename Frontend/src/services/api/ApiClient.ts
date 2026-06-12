@@ -1,5 +1,4 @@
-import type { ApiResponse } from '../../types/common';
-import type { AuthTokens } from '../../types/auth';
+import type { ApiResponse, ApiErrorResponse } from '../../types/common';
 import { STORAGE_KEYS } from '../../utils/constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -11,16 +10,18 @@ interface RequestConfig {
   requiresAuth?: boolean;
 }
 
+const API_PREFIX = '/api/v1';
+
 class ApiClient {
   private baseUrl: string;
-  private tokens: AuthTokens | null = null;
+  private accessToken: string | null = null;
 
   constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
+    this.baseUrl = baseUrl.replace(/\/+$/, '');
   }
 
-  async setTokens(tokens: AuthTokens): Promise<void> {
-    this.tokens = tokens;
+  async setTokens(tokens: { access_token: string }): Promise<void> {
+    this.accessToken = tokens.access_token;
     await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TOKENS, JSON.stringify(tokens));
   }
 
@@ -28,47 +29,52 @@ class ApiClient {
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEYS.AUTH_TOKENS);
       if (stored) {
-        this.tokens = JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        this.accessToken = parsed.access_token || parsed.accessToken || null;
       }
     } catch {
-      this.tokens = null;
+      this.accessToken = null;
     }
   }
 
   async clearTokens(): Promise<void> {
-    this.tokens = null;
+    this.accessToken = null;
     await AsyncStorage.removeItem(STORAGE_KEYS.AUTH_TOKENS);
   }
 
   async request<T>(config: RequestConfig): Promise<ApiResponse<T>> {
     const { method, endpoint, body, headers = {}, requiresAuth = false } = config;
 
-    if (requiresAuth && !this.tokens) {
-      return { success: false, error: 'Authentication required' };
-    }
-
     const requestHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
       ...headers,
     };
 
-    if (requiresAuth && this.tokens) {
-      requestHeaders.Authorization = `Bearer ${this.tokens.accessToken}`;
+    if (requiresAuth && this.accessToken) {
+      requestHeaders.Authorization = `Bearer ${this.accessToken}`;
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const url = `${this.baseUrl}${API_PREFIX}${endpoint}`;
+      const response = await fetch(url, {
         method,
         headers: requestHeaders,
         body: body ? JSON.stringify(body) : undefined,
       });
 
-      const data = await response.json();
+      const text = await response.text();
+      let data: T;
+      try {
+        data = JSON.parse(text);
+      } catch {
+        return { success: false, error: `Invalid JSON response: ${text.slice(0, 100)}` };
+      }
 
       if (!response.ok) {
+        const err = data as unknown as ApiErrorResponse;
         return {
           success: false,
-          error: data.error || data.message || `HTTP ${response.status}`,
+          error: err.detail || (data as Record<string, unknown>)?.message as string || `HTTP ${response.status}`,
         };
       }
 
@@ -100,12 +106,16 @@ class ApiClient {
   }
 
   isAuthenticated(): boolean {
-    return this.tokens !== null;
+    return this.accessToken !== null;
+  }
+
+  getAccessToken(): string | null {
+    return this.accessToken;
   }
 }
 
 const apiClient = new ApiClient(
-  process.env.EXPO_PUBLIC_API_URL || 'https://api.emergencyconnect.dev/v1',
+  process.env.EXPO_PUBLIC_API_URL || 'https://api.emergencyconnect.dev',
 );
 
 export { ApiClient };

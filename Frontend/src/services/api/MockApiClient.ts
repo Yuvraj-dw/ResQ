@@ -1,74 +1,86 @@
 import type { ApiResponse } from '../../types/common';
 import type {
-  RegisterRequest,
-  OtpVerifyRequest,
-  AuthTokens,
+  AppRegisterRequest,
+  AppRegisterVerifyRequest,
+  UserResponse,
 } from '../../types/auth';
 import type {
   EmergencyRequest,
   CreateEmergencyPayload,
-  EmergencyResponse,
-  HelpResponsePayload,
   EmergencyCardData,
 } from '../../types/emergency';
-import type { AppNotification, NotificationPayload } from '../../types/notification';
-import type { UserProfile, UpdateProfileRequest } from '../../types/profile';
+import type { AppNotification } from '../../types/notification';
+import type { UpdateProfileRequest } from '../../types/profile';
 import { generateId } from '../../utils/formatters';
 
 const MOCK_DELAY = 800;
 const MOCK_USER_ID = 'user_mock_001';
 
-const mockProfile: UserProfile = {
-  id: MOCK_USER_ID,
-  fullName: 'John Doe',
-  mobileNumber: '+919876543210',
-  bloodGroup: 'O+',
-  address: '123, Main Street, Bhopal',
-  pincode: '462001',
-  isRegistered: false,
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
+const mockProfile: UserResponse = {
+  _id: MOCK_USER_ID,
+  name: 'John Doe',
+  phone: '+919876543210',
+  resources: ['blood', 'transport'],
+  blood_group: 'O+',
+  location: { type: 'Point', coordinates: [77.4126, 23.2599] },
+  location_name: 'Bhopal',
+  is_volunteer: false,
+  registration_source: 'app',
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
 };
 
 const mockEmergencies: EmergencyRequest[] = [
   {
-    id: 'emergency_001',
-    emergencyType: 'Medical',
-    title: 'Heart Attack',
-    description: 'Elderly person having heart attack, need immediate medical assistance',
-    contactNumber: '+919876543211',
-    latitude: 23.2599,
-    longitude: 77.4126,
-    timestamp: new Date(Date.now() - 600000).toISOString(),
-    status: 'active',
-    userId: 'user_mock_002',
-    userName: 'Rahul S.',
+    _id: 'emergency_001',
+    requester_id: 'user_mock_002',
+    requester_phone: '+919876543211',
+    source: 'app',
+    resource: 'blood',
+    blood_group: 'B-',
+    urgency: 'critical',
+    location_name: 'AIIMS Bhopal',
+    location: { type: 'Point', coordinates: [77.4126, 23.2599] },
+    raw_message: null,
+    status: 'open',
+    assigned_volunteer: null,
+    current_radius_km: 5.0,
+    created_at: new Date(Date.now() - 600000).toISOString(),
+    updated_at: new Date(Date.now() - 600000).toISOString(),
   },
   {
-    id: 'emergency_002',
-    emergencyType: 'Accident',
-    title: 'Road Accident',
-    description: 'Two-wheeler accident near Hoshangabad road, need help',
-    contactNumber: '+919876543212',
-    latitude: 23.2378,
-    longitude: 77.4308,
-    timestamp: new Date(Date.now() - 1200000).toISOString(),
-    status: 'active',
-    userId: 'user_mock_003',
-    userName: 'Priya M.',
+    _id: 'emergency_002',
+    requester_id: 'user_mock_003',
+    requester_phone: '+919876543212',
+    source: 'app',
+    resource: 'transport',
+    blood_group: null,
+    urgency: 'urgent',
+    location_name: 'Hoshangabad Road',
+    location: { type: 'Point', coordinates: [77.4308, 23.2378] },
+    raw_message: null,
+    status: 'open',
+    assigned_volunteer: null,
+    current_radius_km: 5.0,
+    created_at: new Date(Date.now() - 1200000).toISOString(),
+    updated_at: new Date(Date.now() - 1200000).toISOString(),
   },
   {
-    id: 'emergency_003',
-    emergencyType: 'Transport Assistance',
-    title: 'Need Vehicle',
-    description: 'Need transport to hospital for pregnant woman',
-    contactNumber: '+919876543213',
-    latitude: 23.2217,
-    longitude: 77.3975,
-    timestamp: new Date(Date.now() - 3600000).toISOString(),
-    status: 'active',
-    userId: 'user_mock_004',
-    userName: 'Amit K.',
+    _id: 'emergency_003',
+    requester_id: 'user_mock_004',
+    requester_phone: '+919876543213',
+    source: 'sms',
+    resource: 'medicines',
+    blood_group: null,
+    urgency: 'normal',
+    location_name: 'Old City',
+    location: { type: 'Point', coordinates: [77.3975, 23.2217] },
+    raw_message: 'Need medicines urgently',
+    status: 'open',
+    assigned_volunteer: null,
+    current_radius_km: 5.0,
+    created_at: new Date(Date.now() - 3600000).toISOString(),
+    updated_at: new Date(Date.now() - 3600000).toISOString(),
   },
 ];
 
@@ -77,7 +89,7 @@ const mockNotifications: AppNotification[] = [
     id: 'notif_001',
     type: 'emergency',
     title: 'Emergency Near You',
-    body: 'Medical emergency reported 2.3 km away',
+    body: 'Blood requirement reported 2.3 km away',
     read: false,
     createdAt: new Date(Date.now() - 300000).toISOString(),
     emergencyId: 'emergency_001',
@@ -97,83 +109,85 @@ function delay(ms = MOCK_DELAY): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-interface MockApiClientInterface {
-  register(data: RegisterRequest): Promise<ApiResponse<{ message: string }>>;
-  verifyOtp(data: OtpVerifyRequest): Promise<ApiResponse<AuthTokens>>;
-  getProfile(): Promise<ApiResponse<UserProfile>>;
-  updateProfile(data: UpdateProfileRequest): Promise<ApiResponse<UserProfile>>;
-  createEmergency(data: CreateEmergencyPayload): Promise<ApiResponse<EmergencyRequest>>;
-  getEmergencies(): Promise<ApiResponse<EmergencyCardData[]>>;
-  getEmergencyById(id: string): Promise<ApiResponse<EmergencyRequest>>;
-  respondToEmergency(data: HelpResponsePayload): Promise<ApiResponse<EmergencyResponse>>;
-  getNotifications(): Promise<ApiResponse<AppNotification[]>>;
-  markNotificationRead(id: string): Promise<ApiResponse<{ success: boolean }>>;
-  cancelEmergency(id: string): Promise<ApiResponse<{ success: boolean }>>;
-  getMyEmergencies(): Promise<ApiResponse<EmergencyRequest[]>>;
-}
-
-export class MockApiClient implements MockApiClientInterface {
-  private userState: UserProfile = { ...mockProfile };
+export class MockApiClient {
+  private userState: UserResponse = { ...mockProfile };
   private emergencyState: EmergencyRequest[] = [...mockEmergencies];
   private notificationState: AppNotification[] = [...mockNotifications];
   private registeredUsers: Map<string, string> = new Map();
 
-  async register(data: RegisterRequest): Promise<ApiResponse<{ message: string }>> {
+  async registerApp(data: AppRegisterRequest): Promise<ApiResponse<{ message: string; phone: string; requires_verification: boolean }>> {
     await delay(500);
     this.userState = {
       ...this.userState,
-      fullName: data.fullName,
-      mobileNumber: data.mobileNumber,
-      bloodGroup: data.bloodGroup,
-      address: data.address,
-      pincode: data.pincode,
-      isRegistered: false,
+      name: data.name,
+      phone: data.phone,
+      blood_group: data.blood_group,
+      resources: data.resources,
+      location_name: data.location_name,
     };
-    this.registeredUsers.set(data.mobileNumber, generateId());
+    this.registeredUsers.set(data.phone, generateId());
     return {
       success: true,
-      data: { message: 'OTP sent to registered mobile number' },
+      data: { message: 'OTP sent to your phone', phone: data.phone, requires_verification: true },
     };
   }
 
-  async verifyOtp(data: OtpVerifyRequest): Promise<ApiResponse<AuthTokens>> {
+  async verifyAppRegistration(data: AppRegisterVerifyRequest): Promise<ApiResponse<{
+    access_token: string;
+    token_type: string;
+    user: UserResponse;
+  }>> {
     await delay();
     if (!data.otp || data.otp.length < 4) {
       return { success: false, error: 'Invalid OTP' };
     }
-    this.userState.isRegistered = true;
-    const tokens: AuthTokens = {
-      accessToken: `mock_access_${generateId()}`,
-      refreshToken: `mock_refresh_${generateId()}`,
-      expiresAt: new Date(Date.now() + 86400000).toISOString(),
+    if (data.name) this.userState.name = data.name;
+    if (data.blood_group) this.userState.blood_group = data.blood_group;
+    if (data.resources) this.userState.resources = data.resources;
+    if (data.location_name) this.userState.location_name = data.location_name;
+    return {
+      success: true,
+      data: {
+        access_token: `mock_access_${generateId()}`,
+        token_type: 'bearer',
+        user: { ...this.userState },
+      },
     };
-    return { success: true, data: tokens };
   }
 
-  async getProfile(): Promise<ApiResponse<UserProfile>> {
+  async getProfile(): Promise<ApiResponse<UserResponse>> {
     await delay();
     return { success: true, data: { ...this.userState } };
   }
 
-  async updateProfile(data: UpdateProfileRequest): Promise<ApiResponse<UserProfile>> {
+  async updateProfile(data: UpdateProfileRequest): Promise<ApiResponse<UserResponse>> {
     await delay();
     this.userState = {
       ...this.userState,
       ...data,
-      updatedAt: new Date().toISOString(),
-    };
+      updated_at: new Date().toISOString(),
+    } as UserResponse;
     return { success: true, data: { ...this.userState } };
   }
 
-  async createEmergency(
-    payload: CreateEmergencyPayload,
-  ): Promise<ApiResponse<EmergencyRequest>> {
+  async createEmergency(payload: CreateEmergencyPayload): Promise<ApiResponse<EmergencyRequest>> {
     await delay();
     const emergency: EmergencyRequest = {
-      id: `emergency_${generateId()}`,
-      ...payload,
-      status: 'active',
-      userId: MOCK_USER_ID,
+      _id: `emergency_${generateId()}`,
+      requester_id: MOCK_USER_ID,
+      requester_phone: this.userState.phone,
+      source: 'app',
+      resource: payload.resource,
+      blood_group: payload.blood_group || null,
+      urgency: payload.urgency,
+      location_name: payload.location_name,
+      location: { type: 'Point', coordinates: [payload.longitude, payload.latitude] },
+      raw_message: null,
+      status: 'open',
+      assigned_volunteer: null,
+      current_radius_km: 5.0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
     this.emergencyState.unshift(emergency);
     return { success: true, data: emergency };
@@ -182,48 +196,41 @@ export class MockApiClient implements MockApiClientInterface {
   async getEmergencies(): Promise<ApiResponse<EmergencyCardData[]>> {
     await delay();
     const cards: EmergencyCardData[] = this.emergencyState
-      .filter((e) => e.status === 'active')
+      .filter((e) => e.status === 'open' || e.status === 'matched')
       .map((e) => ({
-        id: e.id,
-        type: e.emergencyType,
-        title: e.title,
-        description: e.description.substring(0, 60),
-        distanceKm: Math.random() * 10 + 0.5,
-        timeAgo: `${Math.floor(Math.random() * 60) + 1}m ago`,
+        _id: e._id,
+        requester_phone: e.requester_phone,
+        resource: e.resource,
+        blood_group: e.blood_group,
+        urgency: e.urgency,
+        location_name: e.location_name,
         status: e.status,
-        requesterName: e.userName || 'Unknown',
+        distance_km: Math.random() * 10 + 0.5,
+        time_ago: `${Math.floor(Math.random() * 60) + 1}m ago`,
+        current_radius_km: e.current_radius_km,
+        created_at: e.created_at,
       }));
     return { success: true, data: cards };
   }
 
   async getEmergencyById(id: string): Promise<ApiResponse<EmergencyRequest>> {
     await delay();
-    const emergency = this.emergencyState.find((e) => e.id === id);
+    const emergency = this.emergencyState.find((e) => e._id === id);
     if (!emergency) {
       return { success: false, error: 'Emergency not found' };
     }
     return { success: true, data: { ...emergency } };
   }
 
-  async respondToEmergency(
-    data: HelpResponsePayload,
-  ): Promise<ApiResponse<EmergencyResponse>> {
+  async acceptEmergency(id: string): Promise<ApiResponse<EmergencyRequest>> {
     await delay();
-    const emergency = this.emergencyState.find((e) => e.id === data.emergencyId);
+    const emergency = this.emergencyState.find((e) => e._id === id);
     if (!emergency) {
       return { success: false, error: 'Emergency not found' };
     }
-    const response: EmergencyResponse = {
-      emergencyId: data.emergencyId,
-      responderId: data.responderId,
-      responderName: data.responderName,
-      responderMobile: data.responderMobile,
-      responderLatitude: data.responderLatitude,
-      responderLongitude: data.responderLongitude,
-      timestamp: new Date().toISOString(),
-      status: 'accepted',
-    };
-    return { success: true, data: response };
+    emergency.status = 'assigned';
+    emergency.assigned_volunteer = MOCK_USER_ID;
+    return { success: true, data: { ...emergency } };
   }
 
   async getNotifications(): Promise<ApiResponse<AppNotification[]>> {
@@ -240,7 +247,7 @@ export class MockApiClient implements MockApiClientInterface {
 
   async cancelEmergency(id: string): Promise<ApiResponse<{ success: boolean }>> {
     await delay();
-    const emergency = this.emergencyState.find((e) => e.id === id);
+    const emergency = this.emergencyState.find((e) => e._id === id);
     if (emergency) emergency.status = 'cancelled';
     return { success: true, data: { success: true } };
   }
@@ -248,7 +255,7 @@ export class MockApiClient implements MockApiClientInterface {
   async getMyEmergencies(): Promise<ApiResponse<EmergencyRequest[]>> {
     await delay();
     const myEmergencies = this.emergencyState.filter(
-      (e) => e.userId === MOCK_USER_ID,
+      (e) => e.requester_id === MOCK_USER_ID,
     );
     return { success: true, data: myEmergencies };
   }

@@ -1,60 +1,44 @@
 import type { ApiResponse } from '../types/common';
-import type { UserProfile, UpdateProfileRequest } from '../types/profile';
-import env from '../config/env';
+import type { UserResponse } from '../types/auth';
+import type { UpdateProfileRequest } from '../types/profile';
 import apiClient from '../services/api/ApiClient';
-import mockApiClient from '../services/api/MockApiClient';
 import storageService from '../services/storage/StorageService';
 
 export interface IProfileRepository {
-  getProfile(): Promise<ApiResponse<UserProfile>>;
-  updateProfile(data: UpdateProfileRequest): Promise<ApiResponse<UserProfile>>;
-  getLocalProfile(): Promise<UserProfile | null>;
-  saveLocalProfile(profile: UserProfile): Promise<void>;
+  getProfile(): Promise<ApiResponse<UserResponse>>;
+  updateProfile(data: UpdateProfileRequest): Promise<ApiResponse<UserResponse>>;
+  getLocalProfile(): Promise<UserResponse | null>;
+  saveLocalProfile(profile: UserResponse): Promise<void>;
 }
 
 export class ProfileRepository implements IProfileRepository {
-  private useMock: boolean;
-
-  constructor(useMock = env.enableMockApi) {
-    this.useMock = useMock;
-  }
-
-  async getProfile(): Promise<ApiResponse<UserProfile>> {
-    if (this.useMock) {
-      const result = await mockApiClient.getProfile();
-      if (result.success && result.data) {
-        await storageService.setUserProfile(result.data);
-      }
-      return result;
-    }
-    const result = await apiClient.get<UserProfile>('/profile');
+  async getProfile(): Promise<ApiResponse<UserResponse>> {
+    const result = await apiClient.get<UserResponse>('/auth/me');
     if (result.success && result.data) {
-      await storageService.setUserProfile(result.data);
+      await storageService.setItem('user_profile', JSON.stringify(result.data));
     }
     return result;
   }
 
-  async updateProfile(data: UpdateProfileRequest): Promise<ApiResponse<UserProfile>> {
-    if (this.useMock) {
-      const result = await mockApiClient.updateProfile(data);
-      if (result.success && result.data) {
-        await storageService.setUserProfile(result.data);
-      }
-      return result;
-    }
-    const result = await apiClient.patch<UserProfile>('/profile', data);
+  async updateProfile(data: UpdateProfileRequest): Promise<ApiResponse<UserResponse>> {
+    const result = await apiClient.patch<UserResponse>('/volunteers/me', data);
     if (result.success && result.data) {
-      await storageService.setUserProfile(result.data);
+      await storageService.setItem('user_profile', JSON.stringify(result.data));
     }
     return result;
   }
 
-  async getLocalProfile(): Promise<UserProfile | null> {
-    return storageService.getUserProfile();
+  async getLocalProfile(): Promise<UserResponse | null> {
+    try {
+      const raw = await storageService.getItem('user_profile');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
   }
 
-  async saveLocalProfile(profile: UserProfile): Promise<void> {
-    await storageService.setUserProfile(profile);
+  async saveLocalProfile(profile: UserResponse): Promise<void> {
+    await storageService.setItem('user_profile', JSON.stringify(profile));
   }
 }
 

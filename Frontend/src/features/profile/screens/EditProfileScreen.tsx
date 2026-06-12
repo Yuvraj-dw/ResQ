@@ -14,7 +14,10 @@ import Button from '../../../components/Button';
 import Badge from '../../../components/Badge';
 import { BLOOD_GROUPS } from '../../../utils/constants';
 import { useProfile } from '../hooks/useProfile';
+import { useAuth } from '../../auth/hooks/useAuth';
 import type { UpdateProfileRequest } from '../../../types/profile';
+
+const RESOURCES = ['blood', 'transport', 'medicines', 'food', 'shelter'] as const;
 
 interface EditProfileScreenProps {
   navigation: any;
@@ -22,39 +25,46 @@ interface EditProfileScreenProps {
 
 const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation }) => {
   const { profile, isUpdating, updateProfile } = useProfile();
+  const { user } = useAuth();
 
-  const [formData, setFormData] = useState<Required<UpdateProfileRequest>>({
-    fullName: '',
-    bloodGroup: '',
-    address: '',
-    pincode: '',
+  const displayProfile = profile || user;
+
+  const [formData, setFormData] = useState<UpdateProfileRequest>({
+    name: '',
+    blood_group: '',
+    location_name: '',
+    resources: [],
   });
 
-  const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    if (profile) {
+    if (displayProfile) {
       setFormData({
-        fullName: profile.fullName || '',
-        bloodGroup: profile.bloodGroup || '',
-        address: profile.address || '',
-        pincode: profile.pincode || '',
+        name: displayProfile.name || '',
+        blood_group: displayProfile.blood_group || '',
+        location_name: displayProfile.location_name || '',
+        resources: displayProfile.resources || [],
       });
     }
-  }, [profile]);
+  }, [displayProfile]);
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
-    if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
-    if (!formData.bloodGroup) newErrors.bloodGroup = 'Blood group is required';
-    if (!formData.address.trim()) newErrors.address = 'Address is required';
-    if (!formData.pincode.trim()) {
-      newErrors.pincode = 'Pincode is required';
-    } else if (!/^\d{6}$/.test(formData.pincode)) {
-      newErrors.pincode = 'Enter a valid 6-digit pincode';
-    }
+    if (!formData.name?.trim()) newErrors.name = 'Name is required';
+    if (!formData.blood_group) newErrors.bloodGroup = 'Blood group is required';
+    if (!formData.location_name?.trim()) newErrors.locationName = 'Location is required';
+    if (!formData.resources || formData.resources.length === 0) newErrors.resources = 'Select at least one resource';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const toggleResource = (r: string) => {
+    const current = formData.resources || [];
+    const updated = current.includes(r)
+      ? current.filter((x) => x !== r)
+      : [...current, r];
+    setFormData((prev) => ({ ...prev, resources: updated }));
   };
 
   const handleSubmit = async () => {
@@ -66,92 +76,59 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation }) => 
     }
   };
 
-  const updateField = (field: keyof typeof formData, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: undefined }));
-    }
-  };
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        keyboardShouldPersistTaps="handled"
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.form}>
           <Input
             label="Full Name"
             placeholder="Enter your full name"
-            value={formData.fullName}
-            onChangeText={(v) => updateField('fullName', v)}
-            error={errors.fullName}
+            value={formData.name || ''}
+            onChangeText={(v) => { setFormData((p) => ({ ...p, name: v })); if (errors.name) setErrors((p) => ({ ...p, name: '' })); }}
+            error={errors.name}
             autoCapitalize="words"
             required
           />
 
           <View style={styles.fieldContainer}>
-            <Text style={styles.fieldLabel}>
-              Blood Group <Text style={styles.required}>*</Text>
-            </Text>
-            <View style={styles.bloodPicker}>
+            <Text style={styles.fieldLabel}>Blood Group <Text style={styles.required}>*</Text></Text>
+            <View style={styles.pickerRow}>
               {BLOOD_GROUPS.map((bg) => (
-                <TouchableOpacity key={bg} onPress={() => updateField('bloodGroup', bg)}>
-                  <Badge
-                    label={bg}
-                    variant={formData.bloodGroup === bg ? 'emergency' : 'default'}
-                    size="md"
-                    style={styles.bloodOption}
-                  />
+                <TouchableOpacity key={bg} onPress={() => { setFormData((p) => ({ ...p, blood_group: bg })); if (errors.bloodGroup) setErrors((p) => ({ ...p, bloodGroup: '' })); }}>
+                  <Badge label={bg} variant={formData.blood_group === bg ? 'emergency' : 'default'} size="md" style={styles.option} />
                 </TouchableOpacity>
               ))}
             </View>
-            {errors.bloodGroup && (
-              <Text style={styles.errorText}>{errors.bloodGroup}</Text>
-            )}
+            {errors.bloodGroup && <Text style={styles.errorText}>{errors.bloodGroup}</Text>}
+          </View>
+
+          <View style={styles.fieldContainer}>
+            <Text style={styles.fieldLabel}>Resources <Text style={styles.required}>*</Text></Text>
+            <View style={styles.pickerRow}>
+              {RESOURCES.map((r) => (
+                <TouchableOpacity key={r} onPress={() => toggleResource(r)}>
+                  <Badge label={r} variant={formData.resources?.includes(r) ? 'info' : 'default'} size="md" style={styles.option} />
+                </TouchableOpacity>
+              ))}
+            </View>
+            {errors.resources && <Text style={styles.errorText}>{errors.resources}</Text>}
           </View>
 
           <Input
-            label="Address"
-            placeholder="Enter your address"
-            value={formData.address}
-            onChangeText={(v) => updateField('address', v)}
-            error={errors.address}
-            multiline
-            numberOfLines={2}
-            required
-          />
-
-          <Input
-            label="Pincode"
-            placeholder="462001"
-            value={formData.pincode}
-            onChangeText={(v) => updateField('pincode', v)}
-            error={errors.pincode}
-            keyboardType="number-pad"
-            maxLength={6}
+            label="Location"
+            placeholder="e.g., AIIMS Bhopal"
+            value={formData.location_name || ''}
+            onChangeText={(v) => { setFormData((p) => ({ ...p, location_name: v })); if (errors.locationName) setErrors((p) => ({ ...p, locationName: '' })); }}
+            error={errors.locationName}
             required
           />
 
           <View style={styles.buttonRow}>
-            <Button
-              title="Cancel"
-              onPress={() => navigation.goBack()}
-              variant="outline"
-              size="lg"
-              style={styles.cancelButton}
-            />
-            <Button
-              title="Save Changes"
-              onPress={handleSubmit}
-              variant="primary"
-              size="lg"
-              loading={isUpdating}
-              style={styles.saveButton}
-            />
+            <Button title="Cancel" onPress={() => navigation.goBack()} variant="outline" size="lg" style={styles.cancelButton} />
+            <Button title="Save Changes" onPress={handleSubmit} variant="primary" size="lg" loading={isUpdating} style={styles.saveButton} />
           </View>
         </View>
       </ScrollView>
@@ -160,53 +137,18 @@ const EditProfileScreen: React.FC<EditProfileScreenProps> = ({ navigation }) => 
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: spacing.xxl,
-  },
-  form: {
-    padding: spacing.lg,
-  },
-  fieldContainer: {
-    marginBottom: spacing.md,
-  },
-  fieldLabel: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: spacing.xs,
-  },
-  required: {
-    color: colors.error,
-  },
-  bloodPicker: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  bloodOption: {
-    marginBottom: spacing.xs,
-  },
-  errorText: {
-    fontSize: fontSize.sm,
-    color: colors.error,
-    marginTop: spacing.xs,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginTop: spacing.lg,
-  },
-  cancelButton: {
-    flex: 1,
-  },
-  saveButton: {
-    flex: 1,
-  },
+  container: { flex: 1, backgroundColor: colors.background },
+  scrollContent: { flexGrow: 1, paddingBottom: spacing.xxl },
+  form: { padding: spacing.lg },
+  fieldContainer: { marginBottom: spacing.md },
+  fieldLabel: { fontSize: fontSize.md, fontWeight: '600', color: colors.text, marginBottom: spacing.xs },
+  required: { color: colors.error },
+  pickerRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
+  option: { marginBottom: spacing.xs },
+  errorText: { fontSize: fontSize.sm, color: colors.error, marginTop: spacing.xs },
+  buttonRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.lg },
+  cancelButton: { flex: 1 },
+  saveButton: { flex: 1 },
 });
 
 export default EditProfileScreen;

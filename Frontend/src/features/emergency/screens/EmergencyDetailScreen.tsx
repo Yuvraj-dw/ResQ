@@ -56,16 +56,19 @@ const EmergencyDetailScreen: React.FC<EmergencyDetailScreenProps> = ({
     return <ErrorState message="Emergency not found" fullScreen />;
   }
 
-  const distance = userLocation
+  const coords = currentEmergency.location?.coordinates;
+  const emergencyLatLng = coords ? { latitude: coords[1], longitude: coords[0] } : null;
+
+  const distance = userLocation && emergencyLatLng
     ? calculateDistance(
         userLocation.latitude,
         userLocation.longitude,
-        currentEmergency.latitude,
-        currentEmergency.longitude,
+        emergencyLatLng.latitude,
+        emergencyLatLng.longitude,
       )
     : 0;
 
-  const typeVariant = getEmergencyTypeVariant(currentEmergency.emergencyType);
+  const typeVariant = getEmergencyTypeVariant(currentEmergency.resource);
   const statusVariant = getStatusVariant(currentEmergency.status);
 
   return (
@@ -76,22 +79,22 @@ const EmergencyDetailScreen: React.FC<EmergencyDetailScreenProps> = ({
     >
       <EmergencyMap
         userLocation={userLocation}
-        emergencyLocation={{
-          latitude: currentEmergency.latitude,
-          longitude: currentEmergency.longitude,
-        }}
-        emergencyType={currentEmergency.emergencyType}
-        emergencyTitle={currentEmergency.title}
+        emergencyLocation={emergencyLatLng}
+        emergencyType={currentEmergency.resource}
         height={200}
       />
 
       <View style={styles.contentCard}>
         <View style={styles.headerRow}>
-          <Badge label={currentEmergency.emergencyType} variant={typeVariant} size="md" />
+          <Badge label={currentEmergency.resource} variant={typeVariant} size="md" />
           <Badge label={currentEmergency.status} variant={statusVariant} size="md" />
         </View>
 
-        <Text style={styles.title}>{currentEmergency.title}</Text>
+        <Text style={styles.title}>{currentEmergency.location_name}</Text>
+
+        {currentEmergency.blood_group && (
+          <Text style={styles.bloodText}>Blood Group: {currentEmergency.blood_group}</Text>
+        )}
 
         <View style={styles.distanceRow}>
           <Text style={styles.distanceIcon}>📍</Text>
@@ -102,121 +105,57 @@ const EmergencyDetailScreen: React.FC<EmergencyDetailScreenProps> = ({
 
         <View style={styles.divider} />
 
-        <Text style={styles.sectionTitle}>Description</Text>
-        <Text style={styles.description}>{currentEmergency.description}</Text>
-
-        <View style={styles.divider} />
-
         <View style={styles.infoGrid}>
           <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Urgency</Text>
+            <Text style={styles.infoValue}>{currentEmergency.urgency}</Text>
+          </View>
+          <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Contact</Text>
-            <Text style={styles.infoValue}>{currentEmergency.contactNumber}</Text>
+            <Text style={styles.infoValue}>{currentEmergency.requester_phone}</Text>
           </View>
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Reported</Text>
-            <Text style={styles.infoValue}>
-              {formatDateTime(currentEmergency.timestamp)}
-            </Text>
+            <Text style={styles.infoValue}>{formatDateTime(currentEmergency.created_at)}</Text>
           </View>
-          {currentEmergency.userName && (
+          <View style={styles.infoItem}>
+            <Text style={styles.infoLabel}>Source</Text>
+            <Text style={styles.infoValue}>{currentEmergency.source}</Text>
+          </View>
+          {currentEmergency.raw_message && (
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Reported by</Text>
-              <Text style={styles.infoValue}>{currentEmergency.userName}</Text>
-            </View>
-          )}
-          {currentEmergency.notes && (
-            <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Notes</Text>
-              <Text style={styles.infoValue}>{currentEmergency.notes}</Text>
+              <Text style={styles.infoLabel}>Raw Message</Text>
+              <Text style={styles.infoValue}>{currentEmergency.raw_message}</Text>
             </View>
           )}
         </View>
       </View>
 
       <HelpActions
-        emergencyId={currentEmergency.id}
-        contactNumber={currentEmergency.contactNumber}
-        latitude={currentEmergency.latitude}
-        longitude={currentEmergency.longitude}
+        emergencyId={currentEmergency._id}
+        contactNumber={currentEmergency.requester_phone}
+        latitude={emergencyLatLng?.latitude || 0}
+        longitude={emergencyLatLng?.longitude || 0}
       />
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollContent: {
-    padding: spacing.md,
-    paddingBottom: spacing.xxl,
-  },
-  contentCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-    ...shadows.md,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.md,
-  },
-  title: {
-    fontSize: fontSize.xl,
-    fontWeight: '800',
-    color: colors.text,
-    marginBottom: spacing.sm,
-  },
-  distanceRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    marginBottom: spacing.md,
-  },
-  distanceIcon: {
-    fontSize: fontSize.lg,
-  },
-  distanceText: {
-    fontSize: fontSize.md,
-    color: colors.emergency,
-    fontWeight: '600',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginVertical: spacing.md,
-  },
-  sectionTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: spacing.sm,
-  },
-  description: {
-    fontSize: fontSize.md,
-    color: colors.textSecondary,
-    lineHeight: 24,
-  },
-  infoGrid: {
-    gap: spacing.md,
-  },
-  infoItem: {
-    gap: spacing.xs,
-  },
-  infoLabel: {
-    fontSize: fontSize.sm,
-    color: colors.textSecondary,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  infoValue: {
-    fontSize: fontSize.md,
-    color: colors.text,
-  },
+  container: { flex: 1, backgroundColor: colors.background },
+  scrollContent: { padding: spacing.md, paddingBottom: spacing.xxl },
+  contentCard: { backgroundColor: colors.surface, borderRadius: borderRadius.lg, padding: spacing.lg, marginBottom: spacing.md, ...shadows.md },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.md },
+  title: { fontSize: fontSize.xl, fontWeight: '800', color: colors.text, marginBottom: spacing.sm },
+  bloodText: { fontSize: fontSize.md, color: colors.emergency, fontWeight: '600', marginBottom: spacing.sm },
+  distanceRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginBottom: spacing.md },
+  distanceIcon: { fontSize: fontSize.lg },
+  distanceText: { fontSize: fontSize.md, color: colors.emergency, fontWeight: '600' },
+  divider: { height: 1, backgroundColor: colors.border, marginVertical: spacing.md },
+  infoGrid: { gap: spacing.md },
+  infoItem: { gap: spacing.xs },
+  infoLabel: { fontSize: fontSize.sm, color: colors.textSecondary, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+  infoValue: { fontSize: fontSize.md, color: colors.text },
 });
 
 export default EmergencyDetailScreen;

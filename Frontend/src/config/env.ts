@@ -1,5 +1,5 @@
 const env = {
-  apiUrl: process.env.EXPO_PUBLIC_API_URL || 'https://api.emergencyconnect.dev/v1',
+  apiUrl: process.env.EXPO_PUBLIC_API_URL || 'https://api.emergencyconnect.dev',
   smsGatewayEnabled: process.env.EXPO_PUBLIC_SMS_GATEWAY_ENABLED === 'true',
   smsGatewayNumber: process.env.EXPO_PUBLIC_SMS_GATEWAY_NUMBER || '+1234567890',
   mapProvider: process.env.EXPO_PUBLIC_MAP_PROVIDER || 'default',

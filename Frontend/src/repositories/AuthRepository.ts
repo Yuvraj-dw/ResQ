@@ -1,38 +1,55 @@
 import type { ApiResponse } from '../types/common';
-import type { RegisterRequest, OtpVerifyRequest, AuthTokens } from '../types/auth';
+import type {
+  AppRegisterRequest,
+  AppRegisterVerifyRequest,
+  SmsRegisterRequest,
+  SendOtpRequest,
+  VerifyOtpRequest,
+  AuthTokens,
+  UserResponse,
+} from '../types/auth';
 import env from '../config/env';
 import apiClient from '../services/api/ApiClient';
-import mockApiClient from '../services/api/MockApiClient';
 
 export interface IAuthRepository {
-  register(data: RegisterRequest): Promise<ApiResponse<{ message: string }>>;
-  verifyOtp(data: OtpVerifyRequest): Promise<ApiResponse<AuthTokens>>;
-  logout(): Promise<ApiResponse<{ success: boolean }>>;
-  refreshToken(): Promise<ApiResponse<AuthTokens>>;
+  registerApp(data: AppRegisterRequest): Promise<ApiResponse<{ message: string; phone: string; requires_verification: boolean }>>;
+  verifyAppRegistration(data: AppRegisterVerifyRequest): Promise<ApiResponse<AuthTokens>>;
+  registerSms(data: SmsRegisterRequest): Promise<ApiResponse<AuthTokens>>;
+  sendOtp(data: SendOtpRequest): Promise<ApiResponse<{ message: string }>>;
+  verifyOtp(data: VerifyOtpRequest): Promise<ApiResponse<AuthTokens>>;
+  getMe(): Promise<ApiResponse<UserResponse>>;
+  logout(): Promise<void>;
 }
 
 export class AuthRepository implements IAuthRepository {
-  private useMock: boolean;
-
-  constructor(useMock = env.enableMockApi) {
-    this.useMock = useMock;
+  async registerApp(data: AppRegisterRequest): Promise<ApiResponse<{ message: string; phone: string; requires_verification: boolean }>> {
+    const result = await apiClient.post<{ message: string; phone: string; requires_verification: boolean }>(
+      '/auth/register/app', data, false,
+    );
+    return result;
   }
 
-  async register(data: RegisterRequest): Promise<ApiResponse<{ message: string }>> {
-    if (this.useMock) {
-      return mockApiClient.register(data);
+  async verifyAppRegistration(data: AppRegisterVerifyRequest): Promise<ApiResponse<AuthTokens>> {
+    const result = await apiClient.post<AuthTokens>('/auth/register/app/verify', data, false);
+    if (result.success && result.data) {
+      await apiClient.setTokens(result.data);
     }
-    return apiClient.post<{ message: string }>('/auth/register', data, false);
+    return result;
   }
 
-  async verifyOtp(data: OtpVerifyRequest): Promise<ApiResponse<AuthTokens>> {
-    if (this.useMock) {
-      const result = await mockApiClient.verifyOtp(data);
-      if (result.success && result.data) {
-        await apiClient.setTokens(result.data);
-      }
-      return result;
+  async registerSms(data: SmsRegisterRequest): Promise<ApiResponse<AuthTokens>> {
+    const result = await apiClient.post<AuthTokens>('/auth/register/sms', data, false);
+    if (result.success && result.data) {
+      await apiClient.setTokens(result.data);
     }
+    return result;
+  }
+
+  async sendOtp(data: SendOtpRequest): Promise<ApiResponse<{ message: string }>> {
+    return apiClient.post<{ message: string }>('/auth/send-otp', data, false);
+  }
+
+  async verifyOtp(data: VerifyOtpRequest): Promise<ApiResponse<AuthTokens>> {
     const result = await apiClient.post<AuthTokens>('/auth/verify-otp', data, false);
     if (result.success && result.data) {
       await apiClient.setTokens(result.data);
@@ -40,27 +57,12 @@ export class AuthRepository implements IAuthRepository {
     return result;
   }
 
-  async logout(): Promise<ApiResponse<{ success: boolean }>> {
-    if (this.useMock) {
-      await apiClient.clearTokens();
-      return { success: true, data: { success: true } };
-    }
-    await apiClient.clearTokens();
-    return apiClient.post<{ success: boolean }>('/auth/logout');
+  async getMe(): Promise<ApiResponse<UserResponse>> {
+    return apiClient.get<UserResponse>('/auth/me');
   }
 
-  async refreshToken(): Promise<ApiResponse<AuthTokens>> {
-    if (this.useMock) {
-      return {
-        success: true,
-        data: {
-          accessToken: 'mock_refreshed_token',
-          refreshToken: 'mock_refreshed_refresh',
-          expiresAt: new Date(Date.now() + 86400000).toISOString(),
-        },
-      };
-    }
-    return apiClient.post<AuthTokens>('/auth/refresh');
+  async logout(): Promise<void> {
+    await apiClient.clearTokens();
   }
 }
 

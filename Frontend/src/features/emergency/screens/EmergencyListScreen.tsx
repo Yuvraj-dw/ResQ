@@ -45,7 +45,7 @@ const EmergencyListScreen: React.FC<EmergencyListScreenProps> = ({ navigation })
       <View style={styles.header}>
         <Text style={styles.title}>Active Emergencies</Text>
         <Text style={styles.subtitle}>
-          {emergencies.length} emergency{emergencies.length !== 1 ? 'ies' : 'y'} near you
+          {emergencies.length} emergency{emergencies.length !== 1 ? 'ies' : ''} near you
         </Text>
       </View>
 
@@ -54,7 +54,7 @@ const EmergencyListScreen: React.FC<EmergencyListScreenProps> = ({ navigation })
         renderItem={({ item }) => (
           <EmergencyCard item={item} onPress={handleEmergencyPress} />
         )}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -78,29 +78,11 @@ const EmergencyListScreen: React.FC<EmergencyListScreenProps> = ({ navigation })
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    padding: spacing.lg,
-    paddingBottom: spacing.sm,
-  },
-  title: {
-    fontSize: fontSize.xxl,
-    fontWeight: '800',
-    color: colors.text,
-    marginBottom: spacing.xs,
-  },
-  subtitle: {
-    fontSize: fontSize.md,
-    color: colors.textSecondary,
-  },
-  listContent: {
-    padding: spacing.md,
-    paddingTop: spacing.xs,
-    flexGrow: 1,
-  },
+  container: { flex: 1, backgroundColor: colors.background },
+  header: { padding: spacing.lg, paddingBottom: spacing.sm },
+  title: { fontSize: fontSize.xxl, fontWeight: '800', color: colors.text, marginBottom: spacing.xs },
+  subtitle: { fontSize: fontSize.md, color: colors.textSecondary },
+  listContent: { padding: spacing.md, paddingTop: spacing.xs, flexGrow: 1 },
 });
 
 export default EmergencyListScreen;

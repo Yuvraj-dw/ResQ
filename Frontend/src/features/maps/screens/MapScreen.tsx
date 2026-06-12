@@ -76,31 +76,29 @@ const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
         ) : (
           emergencies.slice(0, 5).map((emergency) => {
             const distance = userLocation
-              ? formatDistance(emergency.distanceKm)
+              ? formatDistance(emergency.distance_km)
               : 'Unknown';
-            const typeVariant = getEmergencyTypeVariant(emergency.type);
+            const typeVariant = getEmergencyTypeVariant(emergency.resource);
 
             return (
               <TouchableOpacity
-                key={emergency.id}
+                key={emergency._id}
                 style={[
                   styles.emergencyRow,
-                  selectedEmergency?.id === emergency.id && styles.selectedRow,
+                  selectedEmergency?._id === emergency._id && styles.selectedRow,
                 ]}
                 onPress={() => handleEmergencyPress(emergency)}
                 activeOpacity={0.7}
               >
                 <View style={styles.rowLeft}>
-                  <Badge label={emergency.type} variant={typeVariant} size="sm" />
+                  <Badge label={emergency.resource} variant={typeVariant} size="sm" />
                   <Text style={styles.emergencyTitle} numberOfLines={1}>
-                    {emergency.title}
+                    {emergency.location_name}
                   </Text>
                 </View>
                 <View style={styles.rowRight}>
                   <Text style={styles.distanceText}>{distance}</Text>
-                  <TouchableOpacity
-                    onPress={() => handleViewDetails(emergency.id)}
-                  >
+                  <TouchableOpacity onPress={() => handleViewDetails(emergency._id)}>
                     <Text style={styles.viewLink}>View</Text>
                   </TouchableOpacity>
                 </View>
@@ -114,64 +112,18 @@ const MapScreen: React.FC<MapScreenProps> = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  emergenciesPanel: {
-    flex: 1,
-    padding: spacing.md,
-  },
-  panelTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: spacing.md,
-  },
-  emergencyRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    padding: spacing.md,
-    borderRadius: borderRadius.lg,
-    marginBottom: spacing.sm,
-    ...shadows.sm,
-  },
-  selectedRow: {
-    borderColor: colors.emergency,
-    borderWidth: 2,
-  },
-  rowLeft: {
-    flex: 1,
-    gap: spacing.xs,
-  },
-  emergencyTitle: {
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  rowRight: {
-    alignItems: 'flex-end',
-    gap: spacing.xs,
-  },
-  distanceText: {
-    fontSize: fontSize.sm,
-    color: colors.textSecondary,
-  },
-  viewLink: {
-    fontSize: fontSize.sm,
-    color: colors.emergency,
-    fontWeight: '600',
-  },
-  emptyContainer: {
-    padding: spacing.xl,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: fontSize.md,
-    color: colors.textSecondary,
-  },
+  container: { flex: 1, backgroundColor: colors.background },
+  emergenciesPanel: { flex: 1, padding: spacing.md },
+  panelTitle: { fontSize: fontSize.lg, fontWeight: '700', color: colors.text, marginBottom: spacing.md },
+  emergencyRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.surface, padding: spacing.md, borderRadius: borderRadius.lg, marginBottom: spacing.sm, ...shadows.sm },
+  selectedRow: { borderColor: colors.emergency, borderWidth: 2 },
+  rowLeft: { flex: 1, gap: spacing.xs },
+  emergencyTitle: { fontSize: fontSize.md, fontWeight: '600', color: colors.text },
+  rowRight: { alignItems: 'flex-end', gap: spacing.xs },
+  distanceText: { fontSize: fontSize.sm, color: colors.textSecondary },
+  viewLink: { fontSize: fontSize.sm, color: colors.emergency, fontWeight: '600' },
+  emptyContainer: { padding: spacing.xl, alignItems: 'center' },
+  emptyText: { fontSize: fontSize.md, color: colors.textSecondary },
 });
 
 export default MapScreen;

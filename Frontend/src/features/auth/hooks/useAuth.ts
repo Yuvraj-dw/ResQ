@@ -1,15 +1,16 @@
 import { useCallback } from 'react';
 import { useAuthStore } from '../../../store/authStore';
-import type { RegisterRequest, OtpVerifyRequest } from '../../../types/auth';
+import type { AppRegisterRequest, AppRegisterVerifyRequest } from '../../../types/auth';
 
 export function useAuth() {
   const {
     isAuthenticated,
-    isRegistered,
     isLoading,
-    userProfile,
+    user,
     registrationData,
-    register,
+    registerApp,
+    verifyAppRegistration,
+    sendOtp,
     verifyOtp,
     loadProfile,
     logout,
@@ -17,16 +18,30 @@ export function useAuth() {
     checkAuth,
   } = useAuthStore();
 
-  const handleRegister = useCallback(
-    async (data: RegisterRequest) => {
-      return register(data);
+  const handleRegisterApp = useCallback(
+    async (data: AppRegisterRequest) => {
+      return registerApp(data);
     },
-    [register],
+    [registerApp],
+  );
+
+  const handleVerifyAppRegistration = useCallback(
+    async (data: AppRegisterVerifyRequest) => {
+      return verifyAppRegistration(data);
+    },
+    [verifyAppRegistration],
+  );
+
+  const handleSendOtp = useCallback(
+    async (phone: string) => {
+      return sendOtp(phone);
+    },
+    [sendOtp],
   );
 
   const handleVerifyOtp = useCallback(
-    async (data: OtpVerifyRequest) => {
-      return verifyOtp(data);
+    async (phone: string, otp: string) => {
+      return verifyOtp(phone, otp);
     },
     [verifyOtp],
   );
@@ -41,11 +56,12 @@ export function useAuth() {
 
   return {
     isAuthenticated,
-    isRegistered,
     isLoading,
-    userProfile,
+    user,
     registrationData,
-    register: handleRegister,
+    registerApp: handleRegisterApp,
+    verifyAppRegistration: handleVerifyAppRegistration,
+    sendOtp: handleSendOtp,
     verifyOtp: handleVerifyOtp,
     loadProfile,
     logout: handleLogout,

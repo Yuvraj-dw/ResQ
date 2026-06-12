@@ -1,7 +1,6 @@
 import { BaseCommunicationService } from './CommunicationService';
 import type { CreateEmergencyPayload } from '../../types/emergency';
-import type { RegisterRequest } from '../../types/auth';
-import type { HelpResponsePayload } from '../../types/emergency';
+import type { AppRegisterRequest } from '../../types/auth';
 import { SMS_PAYLOAD_PREFIX } from '../../utils/constants';
 import { Linking, Platform } from 'react-native';
 
@@ -15,14 +14,14 @@ export class SmsCommunicationService extends BaseCommunicationService {
     this.useNativeSms = useNativeSms;
   }
 
-  async sendRegistration(data: RegisterRequest): Promise<boolean> {
+  async sendRegistration(data: AppRegisterRequest): Promise<boolean> {
     const smsBody = [
       SMS_PAYLOAD_PREFIX.REGISTRATION,
-      `Name: ${data.fullName}`,
-      `Blood: ${data.bloodGroup}`,
-      `Address: ${data.address}`,
-      `Pincode: ${data.pincode}`,
-      `Mobile: ${data.mobileNumber}`,
+      `Name: ${data.name}`,
+      `Blood: ${data.blood_group}`,
+      `Location: ${data.location_name}`,
+      `Resources: ${data.resources.join(', ')}`,
+      `Mobile: ${data.phone}`,
     ].join('\n');
 
     return this.sendSms(smsBody);
@@ -31,24 +30,11 @@ export class SmsCommunicationService extends BaseCommunicationService {
   async sendEmergency(data: CreateEmergencyPayload): Promise<boolean> {
     const smsBody = [
       SMS_PAYLOAD_PREFIX.EMERGENCY,
-      `Type: ${data.emergencyType}`,
-      `Description: ${data.description}`,
+      `Resource: ${data.resource}`,
+      `Urgency: ${data.urgency}`,
+      `Location: ${data.location_name}`,
       `Lat: ${data.latitude}`,
       `Lng: ${data.longitude}`,
-      `Contact: ${data.contactNumber}`,
-    ].join('\n');
-
-    return this.sendSms(smsBody);
-  }
-
-  async sendHelpResponse(data: HelpResponsePayload): Promise<boolean> {
-    const smsBody = [
-      SMS_PAYLOAD_PREFIX.HELP_RESPONSE,
-      `EmergencyId: ${data.emergencyId}`,
-      `Responder: ${data.responderName}`,
-      `Contact: ${data.responderMobile}`,
-      `Lat: ${data.responderLatitude}`,
-      `Lng: ${data.responderLongitude}`,
     ].join('\n');
 
     return this.sendSms(smsBody);

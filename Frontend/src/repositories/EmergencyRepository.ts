@@ -2,74 +2,45 @@ import type { ApiResponse } from '../types/common';
 import type {
   EmergencyRequest,
   CreateEmergencyPayload,
-  EmergencyResponse,
-  HelpResponsePayload,
   EmergencyCardData,
 } from '../types/emergency';
-import env from '../config/env';
 import apiClient from '../services/api/ApiClient';
-import mockApiClient from '../services/api/MockApiClient';
 
 export interface IEmergencyRepository {
   create(data: CreateEmergencyPayload): Promise<ApiResponse<EmergencyRequest>>;
   getAll(): Promise<ApiResponse<EmergencyCardData[]>>;
   getById(id: string): Promise<ApiResponse<EmergencyRequest>>;
-  respond(data: HelpResponsePayload): Promise<ApiResponse<EmergencyResponse>>;
-  cancel(id: string): Promise<ApiResponse<{ success: boolean }>>;
+  accept(id: string): Promise<ApiResponse<EmergencyRequest>>;
+  updateStatus(id: string, status: string): Promise<ApiResponse<EmergencyRequest>>;
   getMyEmergencies(): Promise<ApiResponse<EmergencyRequest[]>>;
 }
 
 export class EmergencyRepository implements IEmergencyRepository {
-  private useMock: boolean;
-
-  constructor(useMock = env.enableMockApi) {
-    this.useMock = useMock;
-  }
-
-  async create(
-    data: CreateEmergencyPayload,
-  ): Promise<ApiResponse<EmergencyRequest>> {
-    if (this.useMock) {
-      return mockApiClient.createEmergency(data);
-    }
-    return apiClient.post<EmergencyRequest>('/emergency', data);
+  async create(data: CreateEmergencyPayload): Promise<ApiResponse<EmergencyRequest>> {
+    return apiClient.post<EmergencyRequest>('/requests/', data);
   }
 
   async getAll(): Promise<ApiResponse<EmergencyCardData[]>> {
-    if (this.useMock) {
-      return mockApiClient.getEmergencies();
-    }
-    return apiClient.get<EmergencyCardData[]>('/emergency');
+    // The backend GET /requests/ returns the user's requests
+    // For the volunteer feed, we might need a separate endpoint
+    // Using GET /notifications/ could give nearby emergencies
+    return apiClient.get<EmergencyCardData[]>('/requests/');
   }
 
   async getById(id: string): Promise<ApiResponse<EmergencyRequest>> {
-    if (this.useMock) {
-      return mockApiClient.getEmergencyById(id);
-    }
-    return apiClient.get<EmergencyRequest>(`/emergency/${id}`);
+    return apiClient.get<EmergencyRequest>(`/requests/${id}`);
   }
 
-  async respond(
-    data: HelpResponsePayload,
-  ): Promise<ApiResponse<EmergencyResponse>> {
-    if (this.useMock) {
-      return mockApiClient.respondToEmergency(data);
-    }
-    return apiClient.post<EmergencyResponse>('/emergency/respond', data);
+  async accept(id: string): Promise<ApiResponse<EmergencyRequest>> {
+    return apiClient.post<EmergencyRequest>(`/requests/${id}/accept`);
   }
 
-  async cancel(id: string): Promise<ApiResponse<{ success: boolean }>> {
-    if (this.useMock) {
-      return mockApiClient.cancelEmergency(id);
-    }
-    return apiClient.post<{ success: boolean }>(`/emergency/${id}/cancel`);
+  async updateStatus(id: string, status: string): Promise<ApiResponse<EmergencyRequest>> {
+    return apiClient.patch<EmergencyRequest>(`/requests/${id}/status?status=${status}`);
   }
 
   async getMyEmergencies(): Promise<ApiResponse<EmergencyRequest[]>> {
-    if (this.useMock) {
-      return mockApiClient.getMyEmergencies();
-    }
-    return apiClient.get<EmergencyRequest[]>('/emergency/my');
+    return apiClient.get<EmergencyRequest[]>('/requests/');
   }
 }
 

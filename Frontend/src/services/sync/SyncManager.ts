@@ -124,16 +124,16 @@ class SyncManager implements ISyncManager {
   }
 
   private getEndpointForType(type: PendingRequest['type']): string | null {
-    const baseUrl = env.apiUrl;
+    const baseUrl = env.apiUrl.replace(/\/+$/, '');
     switch (type) {
       case 'registration':
-        return `${baseUrl}/auth/register`;
+        return `${baseUrl}/api/v1/auth/register/app/verify`;
       case 'emergency':
-        return `${baseUrl}/emergency`;
+        return `${baseUrl}/api/v1/requests/`;
       case 'sms':
-        return `${baseUrl}/sms`;
+        return `${baseUrl}/api/v1/sms/incoming`;
       case 'help_response':
-        return `${baseUrl}/emergency/respond`;
+        return `${baseUrl}/api/v1/requests/`;
       default:
         return null;
     }

@@ -5,10 +5,8 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
-export interface PaginatedResponse<T> extends ApiResponse<T[]> {
-  total: number;
-  page: number;
-  limit: number;
+export interface ApiErrorResponse {
+  detail: string;
 }
 
 export interface Coordinates {
@@ -17,8 +15,8 @@ export interface Coordinates {
 }
 
 export interface DistanceResult {
-  distanceKm: number;
-  estimatedMinutes: number;
+  distance_km: number;
+  estimated_minutes: number;
 }
 
 export type ConnectionStatus = 'online' | 'offline' | 'poor';
@@ -36,4 +34,9 @@ export interface SyncStatus {
   synced: number;
   failed: number;
   lastSync: string | null;
+}
+
+export interface LocationUpdate {
+  latitude: number;
+  longitude: number;
 }

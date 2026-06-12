@@ -19,7 +19,7 @@ const HelpActions: React.FC<HelpActionsProps> = ({
   longitude,
   onHelpResponded,
 }) => {
-  const { respondToEmergency, isSubmitting } = useEmergency();
+  const { acceptEmergency, isSubmitting } = useEmergency();
   const [responded, setResponded] = useState(false);
 
   const handleICanHelp = () => {
@@ -32,7 +32,7 @@ const HelpActions: React.FC<HelpActionsProps> = ({
           text: 'Yes, I Can Help',
           style: 'destructive',
           onPress: async () => {
-            const result = await respondToEmergency(emergencyId);
+            const result = await acceptEmergency(emergencyId);
             if (result.success) {
               setResponded(true);
               onHelpResponded?.();
@@ -46,18 +46,14 @@ const HelpActions: React.FC<HelpActionsProps> = ({
   const handleCallUser = () => {
     const phoneUrl = `tel:${contactNumber}`;
     Linking.canOpenURL(phoneUrl).then((canOpen) => {
-      if (canOpen) {
-        Linking.openURL(phoneUrl);
-      }
+      if (canOpen) Linking.openURL(phoneUrl);
     });
   };
 
   const handleOpenNavigation = () => {
     const url = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
     Linking.canOpenURL(url).then((canOpen) => {
-      if (canOpen) {
-        Linking.openURL(url);
-      }
+      if (canOpen) Linking.openURL(url);
     });
   };
 
@@ -114,47 +110,14 @@ const HelpActions: React.FC<HelpActionsProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    padding: spacing.md,
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    marginBottom: spacing.md,
-  },
-  sectionTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: spacing.md,
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginBottom: spacing.md,
-  },
-  actionButton: {
-    flex: 1,
-  },
-  navButton: {
-    marginBottom: 0,
-  },
-  respondedContainer: {
-    padding: spacing.lg,
-    backgroundColor: colors.helpAvailable + '15',
-    borderRadius: 12,
-    alignItems: 'center',
-    gap: spacing.md,
-    marginBottom: spacing.md,
-  },
-  respondedIcon: {
-    fontSize: 40,
-  },
-  respondedText: {
-    fontSize: fontSize.md,
-    color: colors.helpAvailable,
-    fontWeight: '600',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
+  container: { padding: spacing.md, backgroundColor: colors.surface, borderRadius: 12, marginBottom: spacing.md },
+  sectionTitle: { fontSize: fontSize.lg, fontWeight: '700', color: colors.text, marginBottom: spacing.md },
+  actionsRow: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.md },
+  actionButton: { flex: 1 },
+  navButton: { marginBottom: 0 },
+  respondedContainer: { padding: spacing.lg, backgroundColor: colors.helpAvailable + '15', borderRadius: 12, alignItems: 'center', gap: spacing.md, marginBottom: spacing.md },
+  respondedIcon: { fontSize: 40 },
+  respondedText: { fontSize: fontSize.md, color: colors.helpAvailable, fontWeight: '600', textAlign: 'center', lineHeight: 22 },
 });
 
 export default HelpActions;

@@ -41,34 +41,24 @@ const MyEmergenciesScreen: React.FC<MyEmergenciesScreenProps> = ({ navigation })
           <TouchableOpacity
             style={styles.card}
             onPress={() =>
-              navigation.navigate('EmergencyDetail', { emergencyId: item.id })
+              navigation.navigate('EmergencyDetail', { emergencyId: item._id })
             }
             activeOpacity={0.7}
           >
             <View style={styles.cardHeader}>
-              <Badge
-                label={item.emergencyType}
-                variant={getEmergencyTypeVariant(item.emergencyType)}
-                size="sm"
-              />
-              <Badge
-                label={item.status}
-                variant={getStatusVariant(item.status)}
-                size="sm"
-              />
+              <Badge label={item.resource} variant={getEmergencyTypeVariant(item.resource)} size="sm" />
+              <Badge label={item.status} variant={getStatusVariant(item.status)} size="sm" />
             </View>
-            <Text style={styles.cardTitle}>{item.title}</Text>
+            <Text style={styles.cardTitle}>{item.location_name}</Text>
             <Text style={styles.cardDescription} numberOfLines={2}>
-              {item.description}
+              {item.resource} - {item.urgency}
             </Text>
             <View style={styles.cardFooter}>
-              <Text style={styles.cardTime}>
-                🕐 {formatDateTime(item.timestamp)}
-              </Text>
+              <Text style={styles.cardTime}>🕐 {formatDateTime(item.created_at)}</Text>
             </View>
           </TouchableOpacity>
         )}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item._id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -94,46 +84,14 @@ const MyEmergenciesScreen: React.FC<MyEmergenciesScreenProps> = ({ navigation })
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  listContent: {
-    padding: spacing.md,
-    flexGrow: 1,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    ...shadows.sm,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.sm,
-  },
-  cardTitle: {
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-    color: colors.text,
-    marginBottom: spacing.xs,
-  },
-  cardDescription: {
-    fontSize: fontSize.sm,
-    color: colors.textSecondary,
-    lineHeight: 20,
-    marginBottom: spacing.sm,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  cardTime: {
-    fontSize: fontSize.sm,
-    color: colors.textSecondary,
-  },
+  container: { flex: 1, backgroundColor: colors.background },
+  listContent: { padding: spacing.md, flexGrow: 1 },
+  card: { backgroundColor: colors.surface, borderRadius: borderRadius.lg, padding: spacing.md, marginBottom: spacing.md, ...shadows.sm },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.sm },
+  cardTitle: { fontSize: fontSize.lg, fontWeight: '700', color: colors.text, marginBottom: spacing.xs },
+  cardDescription: { fontSize: fontSize.sm, color: colors.textSecondary, lineHeight: 20, marginBottom: spacing.sm },
+  cardFooter: { flexDirection: 'row', alignItems: 'center' },
+  cardTime: { fontSize: fontSize.sm, color: colors.textSecondary },
 });
 
 export default MyEmergenciesScreen;

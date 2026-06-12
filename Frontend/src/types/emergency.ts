@@ -1,79 +1,73 @@
-import type { Coordinates } from './common';
-
-export type EmergencyType = 'Medical' | 'Blood Requirement' | 'Accident' | 'Transport Assistance' | 'Other';
-
-export type EmergencyStatus = 'active' | 'resolved' | 'cancelled' | 'pending';
+export type EmergencyResource = 'blood' | 'transport' | 'medicines' | 'food' | 'shelter';
+export type EmergencyUrgency = 'critical' | 'urgent' | 'normal';
+export type EmergencySource = 'app' | 'sms';
+export type EmergencyStatus = 'open' | 'matched' | 'assigned' | 'completed' | 'cancelled';
 
 export interface EmergencyRequest {
-  id: string;
-  emergencyType: EmergencyType;
-  title: string;
-  description: string;
-  contactNumber: string;
-  latitude: number;
-  longitude: number;
-  timestamp: string;
-  notes?: string;
+  _id: string;
+  requester_id: string | null;
+  requester_phone: string;
+  source: EmergencySource;
+  resource: EmergencyResource;
+  blood_group: string | null;
+  urgency: EmergencyUrgency;
+  location_name: string;
+  location: {
+    type: 'Point';
+    coordinates: [number, number];
+  } | null;
+  raw_message: string | null;
   status: EmergencyStatus;
-  userId: string;
-  userName?: string;
-}
-
-export interface EmergencyResponse {
-  emergencyId: string;
-  responderId: string;
-  responderName: string;
-  responderMobile: string;
-  responderLatitude: number;
-  responderLongitude: number;
-  timestamp: string;
-  status: 'accepted' | 'en_route' | 'arrived' | 'completed';
-}
-
-export interface EmergencyFormData {
-  emergencyType: EmergencyType;
-  title: string;
-  description: string;
-  contactNumber: string;
-  latitude: number;
-  longitude: number;
-  timestamp: string;
-  notes?: string;
+  assigned_volunteer: string | null;
+  current_radius_km: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CreateEmergencyPayload {
-  emergencyType: EmergencyType;
-  title: string;
-  description: string;
-  contactNumber: string;
+  resource: EmergencyResource;
+  blood_group?: string;
+  urgency: EmergencyUrgency;
+  location_name: string;
   latitude: number;
   longitude: number;
-  timestamp: string;
-  notes?: string;
-}
-
-export interface HelpResponsePayload {
-  emergencyId: string;
-  responderId: string;
-  responderName: string;
-  responderMobile: string;
-  responderLatitude: number;
-  responderLongitude: number;
 }
 
 export interface EmergencyCardData {
-  id: string;
-  type: EmergencyType;
-  title: string;
-  description: string;
-  distanceKm: number;
-  timeAgo: string;
+  _id: string;
+  requester_phone: string;
+  resource: EmergencyResource;
+  blood_group: string | null;
+  urgency: EmergencyUrgency;
+  location_name: string;
   status: EmergencyStatus;
-  requesterName?: string;
+  distance_km: number;
+  time_ago: string;
+  current_radius_km: number;
+  created_at: string;
 }
 
-export interface EmergencyLocation extends Coordinates {
-  emergencyId: string;
-  emergencyType: EmergencyType;
-  title: string;
+export interface EmergencyFormData {
+  resource: EmergencyResource;
+  blood_group: string;
+  urgency: EmergencyUrgency;
+  location_name: string;
+  latitude: number;
+  longitude: number;
+}
+
+export interface WebSocketMessage {
+  type: 'connected' | 'new_request' | 'request_update' | 'pong' | 'error';
+  data?: EmergencyRequest;
+  request_id?: string;
+  status?: EmergencyStatus;
+  phone?: string;
+  message?: string;
+}
+
+export interface EmergencyLocation {
+  emergency_id: string;
+  resource: EmergencyResource;
+  location_name: string;
+  coordinates: [number, number];
 }

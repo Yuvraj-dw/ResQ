@@ -10,16 +10,15 @@ export function useEmergency() {
     isLoading,
     isSubmitting,
     error,
-    response,
     syncStatus,
     fetchEmergencies,
     fetchMyEmergencies,
     fetchEmergencyById,
     createEmergency,
-    respondToEmergency,
+    acceptEmergency,
+    updateEmergencyStatus,
     cancelEmergency,
     clearCurrentEmergency,
-    clearResponse,
     clearError,
     getSyncStatus,
   } = useEmergencyStore();
@@ -31,11 +30,18 @@ export function useEmergency() {
     [createEmergency],
   );
 
-  const handleRespond = useCallback(
-    async (emergencyId: string) => {
-      return respondToEmergency(emergencyId);
+  const handleAccept = useCallback(
+    async (id: string) => {
+      return acceptEmergency(id);
     },
-    [respondToEmergency],
+    [acceptEmergency],
+  );
+
+  const handleUpdateStatus = useCallback(
+    async (id: string, status: string) => {
+      return updateEmergencyStatus(id, status);
+    },
+    [updateEmergencyStatus],
   );
 
   const handleFetchEmergencies = useCallback(() => {
@@ -50,16 +56,15 @@ export function useEmergency() {
     isLoading,
     isSubmitting,
     error,
-    response,
     syncStatus,
     fetchEmergencies: handleFetchEmergencies,
     fetchMyEmergencies,
     fetchEmergencyById,
     createEmergency: handleCreateEmergency,
-    respondToEmergency: handleRespond,
+    acceptEmergency: handleAccept,
+    updateEmergencyStatus: handleUpdateStatus,
     cancelEmergency,
     clearCurrentEmergency,
-    clearResponse,
     clearError,
     getSyncStatus,
   };

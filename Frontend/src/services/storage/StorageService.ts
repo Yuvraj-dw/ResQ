@@ -25,6 +25,22 @@ export interface IStorageService {
 }
 
 class StorageService implements IStorageService {
+  async getItem(key: string): Promise<string | null> {
+    try {
+      return await AsyncStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
+  async setItem(key: string, value: string): Promise<void> {
+    await AsyncStorage.setItem(key, value);
+  }
+
+  async removeItem(key: string): Promise<void> {
+    await AsyncStorage.removeItem(key);
+  }
+
   async getUserProfile(): Promise<UserProfile | null> {
     try {
       const data = await AsyncStorage.getItem(STORAGE_KEYS.USER_PROFILE);

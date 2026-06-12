@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { colors, fontSize, borderRadius, spacing } from '../config/theme';
-import type { EmergencyType, EmergencyStatus } from '../types/emergency';
+import type { EmergencyResource, EmergencyStatus } from '../types/emergency';
 
 type BadgeVariant = 'emergency' | 'success' | 'warning' | 'info' | 'default' | 'danger';
 
@@ -21,23 +21,24 @@ const variantColors: Record<BadgeVariant, { bg: string; text: string }> = {
   danger: { bg: colors.error + '20', text: colors.error },
 };
 
-export function getEmergencyTypeVariant(type: EmergencyType): BadgeVariant {
-  const map: Record<EmergencyType, BadgeVariant> = {
-    Medical: 'danger',
-    'Blood Requirement': 'emergency',
-    Accident: 'warning',
-    'Transport Assistance': 'info',
-    Other: 'default',
+export function getEmergencyTypeVariant(type: EmergencyResource): BadgeVariant {
+  const map: Record<EmergencyResource, BadgeVariant> = {
+    blood: 'emergency',
+    transport: 'info',
+    medicines: 'warning',
+    food: 'success',
+    shelter: 'default',
   };
   return map[type];
 }
 
 export function getStatusVariant(status: EmergencyStatus): BadgeVariant {
   const map: Record<EmergencyStatus, BadgeVariant> = {
-    active: 'emergency',
-    resolved: 'success',
+    open: 'emergency',
+    matched: 'warning',
+    assigned: 'info',
+    completed: 'success',
     cancelled: 'default',
-    pending: 'warning',
   };
   return map[status];
 }

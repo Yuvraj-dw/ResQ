@@ -15,8 +15,7 @@
 		"resolveJsonModule": true,
 		"skipLibCheck": true,
 		"target": "esnext",
-		"types": ["react-native", "node"],
-		"ignoreDeprecations": "6.0"
+		"types": ["react-native", "node"]
 	},
 	"include": ["**/*.ts", "**/*.tsx", "src/**/*"],
 	"exclude": [

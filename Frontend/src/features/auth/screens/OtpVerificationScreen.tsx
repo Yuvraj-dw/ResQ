@@ -20,8 +20,8 @@ const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
   navigation,
   route,
 }) => {
-  const { mobileNumber } = route.params || {};
-  const { verifyOtp, isLoading, registrationData } = useAuth();
+  const { phone } = route.params || {};
+  const { verifyAppRegistration, isLoading, registrationData } = useAuth();
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(60);
@@ -47,27 +47,18 @@ const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
       const otpArray = text.split('').slice(0, 6);
       const newOtp = [...otp];
       otpArray.forEach((char, i) => {
-        if (index + i < 6) {
-          newOtp[index + i] = char;
-        }
+        if (index + i < 6) newOtp[index + i] = char;
       });
       setOtp(newOtp);
       const nextIndex = Math.min(index + otpArray.length, 5);
-      if (nextIndex < 6) {
-        inputRefs.current[nextIndex]?.focus();
-      } else {
-        inputRefs.current[5]?.blur();
-      }
+      if (nextIndex < 6) inputRefs.current[nextIndex]?.focus();
+      else inputRefs.current[5]?.blur();
       return;
     }
-
     const newOtp = [...otp];
     newOtp[index] = text;
     setOtp(newOtp);
-
-    if (text && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
+    if (text && index < 5) inputRefs.current[index + 1]?.focus();
   };
 
   const handleKeyPress = (key: string, index: number) => {
@@ -82,10 +73,10 @@ const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
       setError('Please enter the complete OTP');
       return;
     }
-
     setError('');
-    const result = await verifyOtp({
-      mobileNumber: mobileNumber || registrationData?.mobileNumber || '',
+
+    const result = await verifyAppRegistration({
+      phone: phone || registrationData?.phone || '',
       otp: otpString,
     });
 
@@ -108,8 +99,8 @@ const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
     inputRefs.current[0]?.focus();
   };
 
-  const maskedNumber = mobileNumber
-    ? `${mobileNumber.slice(0, 2)}****${mobileNumber.slice(-4)}`
+  const maskedNumber = phone
+    ? `${phone.slice(0, 2)}****${phone.slice(-4)}`
     : '';
 
   return (
@@ -129,9 +120,7 @@ const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
           {otp.map((digit, index) => (
             <TextInput
               key={index}
-              ref={(ref) => {
-                inputRefs.current[index] = ref;
-              }}
+              ref={(ref) => { inputRefs.current[index] = ref; }}
               style={[
                 styles.otpInput,
                 digit ? styles.otpInputFilled : null,
@@ -139,9 +128,7 @@ const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
               ]}
               value={digit}
               onChangeText={(text) => handleOtpChange(text, index)}
-              onKeyPress={({ nativeEvent }) =>
-                handleKeyPress(nativeEvent.key, index)
-              }
+              onKeyPress={({ nativeEvent }) => handleKeyPress(nativeEvent.key, index)}
               keyboardType="number-pad"
               maxLength={1}
               selectTextOnFocus
@@ -163,16 +150,9 @@ const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
 
         <View style={styles.resendContainer}>
           {canResend ? (
-            <Button
-              title="Resend OTP"
-              onPress={handleResend}
-              variant="ghost"
-              size="sm"
-            />
+            <Button title="Resend OTP" onPress={handleResend} variant="ghost" size="sm" />
           ) : (
-            <Text style={styles.timerText}>
-              Resend code in {timer}s
-            </Text>
+            <Text style={styles.timerText}>Resend code in {timer}s</Text>
           )}
         </View>
       </View>
@@ -181,70 +161,19 @@ const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.white,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: spacing.xl,
-    justifyContent: 'center',
-  },
-  header: {
-    marginBottom: spacing.xxl,
-  },
-  title: {
-    fontSize: fontSize.xxxl,
-    fontWeight: '800',
-    color: colors.text,
-    marginBottom: spacing.sm,
-  },
-  subtitle: {
-    fontSize: fontSize.md,
-    color: colors.textSecondary,
-    lineHeight: 22,
-  },
-  otpContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: spacing.xl,
-    gap: spacing.sm,
-  },
-  otpInput: {
-    width: 52,
-    height: 60,
-    borderWidth: 2,
-    borderColor: colors.border,
-    borderRadius: borderRadius.lg,
-    textAlign: 'center',
-    fontSize: fontSize.xxl,
-    fontWeight: '700',
-    color: colors.text,
-    backgroundColor: colors.inputBackground,
-  },
-  otpInputFilled: {
-    borderColor: colors.emergency,
-    backgroundColor: colors.white,
-  },
-  otpInputError: {
-    borderColor: colors.error,
-  },
-  errorText: {
-    fontSize: fontSize.sm,
-    color: colors.error,
-    textAlign: 'center',
-    marginBottom: spacing.md,
-  },
-  verifyButton: {
-    marginBottom: spacing.lg,
-  },
-  resendContainer: {
-    alignItems: 'center',
-  },
-  timerText: {
-    fontSize: fontSize.md,
-    color: colors.textSecondary,
-  },
+  container: { flex: 1, backgroundColor: colors.white },
+  content: { flex: 1, paddingHorizontal: spacing.xl, justifyContent: 'center' },
+  header: { marginBottom: spacing.xxl },
+  title: { fontSize: fontSize.xxxl, fontWeight: '800', color: colors.text, marginBottom: spacing.sm },
+  subtitle: { fontSize: fontSize.md, color: colors.textSecondary, lineHeight: 22 },
+  otpContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.xl, gap: spacing.sm },
+  otpInput: { width: 52, height: 60, borderWidth: 2, borderColor: colors.border, borderRadius: borderRadius.lg, textAlign: 'center', fontSize: fontSize.xxl, fontWeight: '700', color: colors.text, backgroundColor: colors.inputBackground },
+  otpInputFilled: { borderColor: colors.emergency, backgroundColor: colors.white },
+  otpInputError: { borderColor: colors.error },
+  errorText: { fontSize: fontSize.sm, color: colors.error, textAlign: 'center', marginBottom: spacing.md },
+  verifyButton: { marginBottom: spacing.lg },
+  resendContainer: { alignItems: 'center' },
+  timerText: { fontSize: fontSize.md, color: colors.textSecondary },
 });
 
 export default OtpVerificationScreen;

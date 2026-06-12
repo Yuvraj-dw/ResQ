@@ -37,12 +37,12 @@ export const ONBOARDING_DATA = [
 
 export const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as const;
 
-export const EMERGENCY_TYPES = [
-  'Medical',
-  'Blood Requirement',
-  'Accident',
-  'Transport Assistance',
-  'Other',
+export const RESOURCES_TYPES = [
+  'blood',
+  'transport',
+  'medicines',
+  'food',
+  'shelter',
 ] as const;
 
 export const SMS_PAYLOAD_PREFIX = {

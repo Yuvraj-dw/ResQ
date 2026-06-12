@@ -3,7 +3,7 @@ import type {
   EmergencyRequest,
   CreateEmergencyPayload,
   EmergencyCardData,
-  EmergencyResponse,
+  EmergencyStatus,
 } from '../types/emergency';
 import type { SyncStatus } from '../types/common';
 import emergencyRepository from '../repositories/EmergencyRepository';
@@ -18,17 +18,18 @@ interface EmergencyStore {
   isLoading: boolean;
   isSubmitting: boolean;
   error: string | null;
-  response: EmergencyResponse | null;
   syncStatus: SyncStatus;
 
   fetchEmergencies: () => Promise<void>;
   fetchMyEmergencies: () => Promise<void>;
   fetchEmergencyById: (id: string) => Promise<void>;
   createEmergency: (data: CreateEmergencyPayload) => Promise<{ success: boolean; error?: string }>;
-  respondToEmergency: (emergencyId: string) => Promise<{ success: boolean; error?: string }>;
+  acceptEmergency: (id: string) => Promise<{ success: boolean; error?: string }>;
+  updateEmergencyStatus: (id: string, status: string) => Promise<{ success: boolean; error?: string }>;
   cancelEmergency: (id: string) => Promise<void>;
+  handleNewRequest: (request: EmergencyRequest) => void;
+  handleRequestUpdate: (requestId: string, status: EmergencyStatus) => void;
   clearCurrentEmergency: () => void;
-  clearResponse: () => void;
   clearError: () => void;
   getSyncStatus: () => Promise<void>;
   reset: () => void;
@@ -41,6 +42,27 @@ const initialSyncStatus: SyncStatus = {
   lastSync: null,
 };
 
+function toCardData(r: EmergencyRequest): EmergencyCardData {
+  const now = Date.now();
+  const created = new Date(r.created_at).getTime();
+  const diffMin = Math.floor((now - created) / 60000);
+  const timeAgo = diffMin < 1 ? 'just now' : diffMin < 60 ? `${diffMin}m ago` : `${Math.floor(diffMin / 60)}h ago`;
+
+  return {
+    _id: r._id,
+    requester_phone: r.requester_phone,
+    resource: r.resource,
+    blood_group: r.blood_group,
+    urgency: r.urgency,
+    location_name: r.location_name,
+    status: r.status,
+    distance_km: 0,
+    time_ago: timeAgo,
+    current_radius_km: r.current_radius_km,
+    created_at: r.created_at,
+  };
+}
+
 export const useEmergencyStore = create<EmergencyStore>((set, get) => ({
   emergencies: [],
   myEmergencies: [],
@@ -48,7 +70,6 @@ export const useEmergencyStore = create<EmergencyStore>((set, get) => ({
   isLoading: false,
   isSubmitting: false,
   error: null,
-  response: null,
   syncStatus: initialSyncStatus,
 
   fetchEmergencies: async () => {
@@ -112,6 +133,8 @@ export const useEmergencyStore = create<EmergencyStore>((set, get) => ({
         if (result.success && result.data) {
           await storageService.addEmergency(result.data);
           set({ isSubmitting: false });
+          const card = toCardData(result.data);
+          set((s) => ({ emergencies: [card, ...s.emergencies] }));
           return { success: true };
         }
         set({ isSubmitting: false });
@@ -139,66 +162,73 @@ export const useEmergencyStore = create<EmergencyStore>((set, get) => ({
     }
   },
 
-  respondToEmergency: async (emergencyId) => {
+  acceptEmergency: async (id) => {
     set({ isSubmitting: true, error: null });
     try {
-      const isOnline = await connectivityService.isOnline();
-      const payload = {
-        emergencyId,
-        responderId: 'responder_mock',
-        responderName: 'Current User',
-        responderMobile: '+919999999999',
-        responderLatitude: 23.2599,
-        responderLongitude: 77.4126,
-      };
-
-      if (isOnline) {
-        const result = await emergencyRepository.respond(payload);
-        if (result.success && result.data) {
-          set({ response: result.data, isSubmitting: false });
-          return { success: true };
-        }
+      const result = await emergencyRepository.accept(id);
+      if (result.success && result.data) {
         set({ isSubmitting: false });
-        return { success: false, error: result.error || 'Failed to respond' };
-      } else {
-        await syncManager.addPendingRequest({
-          id: `response_${Date.now()}`,
-          type: 'help_response',
-          payload: payload as unknown as Record<string, unknown>,
-          createdAt: new Date().toISOString(),
-          retryCount: 0,
-        });
-        set({ isSubmitting: false });
-        return {
-          success: true,
-          error: 'Response saved offline. Will be sent when connection is restored.',
-        };
+        return { success: true };
       }
+      set({ isSubmitting: false });
+      return { success: false, error: result.error || 'Failed to accept emergency' };
     } catch (error) {
       set({ isSubmitting: false });
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to respond',
+        error: error instanceof Error ? error.message : 'Failed to accept emergency',
+      };
+    }
+  },
+
+  updateEmergencyStatus: async (id, status) => {
+    set({ isSubmitting: true, error: null });
+    try {
+      const result = await emergencyRepository.updateStatus(id, status);
+      if (result.success) {
+        set({ isSubmitting: false });
+        return { success: true };
+      }
+      set({ isSubmitting: false });
+      return { success: false, error: result.error || 'Failed to update status' };
+    } catch (error) {
+      set({ isSubmitting: false });
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update status',
       };
     }
   },
 
   cancelEmergency: async (id) => {
     try {
-      await emergencyRepository.cancel(id);
-      const emergencies = get().emergencies.filter((e) => e.id !== id);
+      await emergencyRepository.updateStatus(id, 'cancelled');
+      const emergencies = get().emergencies.filter((e) => e._id !== id);
       set({ emergencies });
     } catch {
       set({ error: 'Failed to cancel emergency' });
     }
   },
 
-  clearCurrentEmergency: () => {
-    set({ currentEmergency: null });
+  handleNewRequest: (request) => {
+    const card = toCardData(request);
+    set((s) => ({ emergencies: [card, ...s.emergencies] }));
   },
 
-  clearResponse: () => {
-    set({ response: null });
+  handleRequestUpdate: (requestId, status) => {
+    set((s) => ({
+      emergencies: s.emergencies.map((e) =>
+        e._id === requestId ? { ...e, status } : e,
+      ),
+      currentEmergency:
+        s.currentEmergency?._id === requestId
+          ? { ...s.currentEmergency, status }
+          : s.currentEmergency,
+    }));
+  },
+
+  clearCurrentEmergency: () => {
+    set({ currentEmergency: null });
   },
 
   clearError: () => {
@@ -225,7 +255,6 @@ export const useEmergencyStore = create<EmergencyStore>((set, get) => ({
       isLoading: false,
       isSubmitting: false,
       error: null,
-      response: null,
     });
   },
 }));
