@@ -42,17 +42,27 @@ export class SmsCommunicationService extends BaseCommunicationService {
 
 	private async sendSms(body: string): Promise<boolean> {
 		try {
-			if (this.useNativeSms) {
-				const smsUrl = Platform.select({
-					ios: `sms:${this.smsGatewayNumber}&body=${encodeURIComponent(body)}`,
-					android: `sms:${this.smsGatewayNumber}?body=${encodeURIComponent(body)}`,
-					default: `sms:${this.smsGatewayNumber}?body=${encodeURIComponent(body)}`,
-				});
+			const urls = Platform.select({
+				ios: [
+					`sms:${this.smsGatewayNumber}&body=${encodeURIComponent(body)}`,
+				],
+				android: [
+					`sms:${this.smsGatewayNumber}?body=${encodeURIComponent(body)}`,
+					`smsto:${this.smsGatewayNumber}?body=${encodeURIComponent(body)}`,
+					`sms:${this.smsGatewayNumber}`,
+				],
+				default: [
+					`sms:${this.smsGatewayNumber}?body=${encodeURIComponent(body)}`,
+				],
+			});
+			for (const smsUrl of urls) {
 				const canOpen = await Linking.canOpenURL(smsUrl);
 				if (canOpen) {
 					await Linking.openURL(smsUrl);
 					return true;
 				}
+			}
+			if (this.useNativeSms) {
 				return false;
 			}
 			return true;

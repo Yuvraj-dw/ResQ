@@ -10,6 +10,7 @@ import {
 import { colors, fontSize, spacing, borderRadius } from '../../../config/theme';
 import Button from '../../../components/Button';
 import { useAuth } from '../hooks/useAuth';
+import { useLocation } from '../../../hooks/useLocation';
 
 interface OtpVerificationScreenProps {
   navigation: any;
@@ -22,6 +23,7 @@ const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
 }) => {
   const { phone, mode } = route.params || {};
   const { verifyAppRegistration, verifyOtp, sendOtp, isLoading, registrationData } = useAuth();
+  const { coordinates: locationCoords, getLocation } = useLocation();
 
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(60);
@@ -76,12 +78,15 @@ const OtpVerificationScreen: React.FC<OtpVerificationScreenProps> = ({
     setError('');
 
     const phoneNumber = phone || registrationData?.phone || '';
+    const coords = locationCoords || await getLocation();
+    const latitude = coords?.latitude;
+    const longitude = coords?.longitude;
     let result;
 
     if (mode === 'login') {
-      result = await verifyOtp(phoneNumber, otpString);
+      result = await verifyOtp(phoneNumber, otpString, latitude, longitude);
     } else {
-      result = await verifyAppRegistration({ phone: phoneNumber, otp: otpString });
+      result = await verifyAppRegistration({ phone: phoneNumber, otp: otpString, latitude, longitude });
     }
 
     if (result.success) {
