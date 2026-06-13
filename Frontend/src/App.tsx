@@ -46,7 +46,6 @@ const App: React.FC = () => {
     config: {
       screens: {
         EmergencyDetail: "emergency/:emergencyId",
-        Profile: "profile",
         MainTabs: {
           screens: {
             Dashboard: "home",

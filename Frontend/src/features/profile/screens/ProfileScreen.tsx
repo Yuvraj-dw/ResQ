@@ -1,11 +1,11 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
+  Modal,
 } from 'react-native';
 import { colors, fontSize, spacing, borderRadius, shadows } from '../../../config/theme';
 import Badge from '../../../components/Badge';
@@ -26,6 +26,7 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   const { logout, user, isAuthenticated } = useAuth();
   const resetEmergencyStore = useEmergencyStore((s) => s.reset);
   const resetNotificationStore = useNotificationStore((s) => s.reset);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
     fetchProfile();
@@ -38,18 +39,9 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
   }, [isAuthenticated, navigation]);
 
   const handleLogout = useCallback(async () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Logout',
-        style: 'destructive',
-        onPress: async () => {
-          resetEmergencyStore();
-          resetNotificationStore();
-          await logout();
-        },
-      },
-    ]);
+    resetEmergencyStore();
+    resetNotificationStore();
+    await logout();
   }, [logout, resetEmergencyStore, resetNotificationStore]);
 
   const displayProfile = profile || user;
@@ -108,10 +100,36 @@ const ProfileScreen: React.FC<ProfileScreenProps> = ({ navigation }) => {
         <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('MyEmergencies')}>
           <Text style={styles.actionButtonText}>🚨  My Emergencies</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, styles.logoutButton]} onPress={handleLogout}>
+        <TouchableOpacity style={[styles.actionButton, styles.logoutButton]} onPress={() => setShowLogoutModal(true)}>
           <Text style={[styles.actionButtonText, styles.logoutText]}>🚪  Logout</Text>
         </TouchableOpacity>
       </View>
+
+      <Modal visible={showLogoutModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Logout</Text>
+            <Text style={styles.modalMessage}>Are you sure you want to logout?</Text>
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalCancelButton]}
+                onPress={() => setShowLogoutModal(false)}
+              >
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalConfirmButton]}
+                onPress={() => {
+                  setShowLogoutModal(false);
+                  handleLogout();
+                }}
+              >
+                <Text style={styles.modalConfirmText}>Logout</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -134,6 +152,16 @@ const styles = StyleSheet.create({
   actionButtonText: { fontSize: fontSize.md, color: colors.text, fontWeight: '600' },
   logoutButton: { backgroundColor: colors.error + '10' },
   logoutText: { color: colors.error },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  modalContent: { backgroundColor: colors.white, borderRadius: borderRadius.xl, padding: spacing.xl, marginHorizontal: spacing.xl, width: '90%', maxWidth: 340, alignItems: 'center' },
+  modalTitle: { fontSize: fontSize.xl, fontWeight: '700', color: colors.text, marginBottom: spacing.sm },
+  modalMessage: { fontSize: fontSize.md, color: colors.textSecondary, textAlign: 'center', marginBottom: spacing.xl, lineHeight: 22 },
+  modalActions: { flexDirection: 'row', gap: spacing.md, width: '100%' },
+  modalButton: { flex: 1, paddingVertical: spacing.md, borderRadius: borderRadius.lg, alignItems: 'center' },
+  modalCancelButton: { backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border },
+  modalCancelText: { fontSize: fontSize.md, fontWeight: '700', color: colors.text },
+  modalConfirmButton: { backgroundColor: colors.error },
+  modalConfirmText: { fontSize: fontSize.md, fontWeight: '700', color: colors.white },
 });
 
 export default ProfileScreen;

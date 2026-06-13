@@ -20,7 +20,7 @@ import { useConnectivity } from '../../../hooks/useConnectivity';
 import type { EmergencyResource, EmergencyUrgency, CreateEmergencyPayload } from '../../../types/emergency';
 
 const RESOURCES: EmergencyResource[] = ['blood', 'transport', 'medicines', 'food', 'shelter'];
-const URGENCIES: EmergencyUrgency[] = ['critical', 'urgent', 'normal'];
+const URGENCIES: EmergencyUrgency[] = ['critical', 'high', 'medium', 'low'];
 
 interface EmergencyFormScreenProps {
   navigation: any;
@@ -33,7 +33,7 @@ const EmergencyFormScreen: React.FC<EmergencyFormScreenProps> = ({ navigation })
 
   const [resource, setResource] = useState<EmergencyResource | null>(null);
   const [bloodGroup, setBloodGroup] = useState('');
-  const [urgency, setUrgency] = useState<EmergencyUrgency>('normal');
+  const [urgency, setUrgency] = useState<EmergencyUrgency>('medium');
   const [locationName, setLocationName] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -79,7 +79,7 @@ const EmergencyFormScreen: React.FC<EmergencyFormScreenProps> = ({ navigation })
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.select({ ios: 'padding', default: undefined })}
     >
       <ScrollView
         contentContainerStyle={styles.scrollContent}
