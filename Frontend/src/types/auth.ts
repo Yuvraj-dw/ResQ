@@ -34,6 +34,8 @@ export interface SendOtpRequest {
 export interface VerifyOtpRequest {
   phone: string;
   otp: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface AuthTokens {

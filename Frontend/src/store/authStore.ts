@@ -12,7 +12,7 @@ interface AuthStore extends AuthState {
   registerApp: (data: AppRegisterRequest) => Promise<{ success: boolean; error?: string; info?: string }>;
   verifyAppRegistration: (data: AppRegisterVerifyRequest) => Promise<{ success: boolean; error?: string }>;
   sendOtp: (phone: string) => Promise<{ success: boolean; error?: string }>;
-  verifyOtp: (phone: string, otp: string) => Promise<{ success: boolean; error?: string }>;
+  verifyOtp: (phone: string, otp: string, latitude?: number, longitude?: number) => Promise<{ success: boolean; error?: string }>;
   loadProfile: () => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: UserResponse) => void;
@@ -117,10 +117,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     }
   },
 
-  verifyOtp: async (phone, otp) => {
+  verifyOtp: async (phone, otp, latitude, longitude) => {
     set({ isLoading: true });
     try {
-      const result = await authRepository.verifyOtp({ phone, otp });
+      const result = await authRepository.verifyOtp({ phone, otp, latitude, longitude });
       if (result.success && result.data) {
         const { access_token, token_type, user } = result.data;
         await profileRepository.saveLocalProfile(user);
